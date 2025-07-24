@@ -1,0 +1,15 @@
+	{
+		"recommendations": [
+		  "dbaeumer.vscode-eslint",
+		  "esbenp.prettier-vscode",
+		  "bradlc.vscode-tailwindcss",
+		  "yoavbls.pretty-ts-errors",
+		  "rangav.vscode-thunder-client",
+		  "streetsidesoftware.code-spell-checker",
+		  "quicktype.quicktype",
+		  "vscode-icons-team.vscode-icons",
+		  "Prisma.prisma",
+		  "Vue.volar",
+		  "svelte.svelte-vscode"
+		]
+	  }
