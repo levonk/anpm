@@ -1,0 +1,40 @@
+{
+  "name": "anpm",
+  "version": "0.1.0",
+  "description": "A wrapper for various Node.js package managers",
+  "type": "module",
+  "bin": {
+    "anpm": "dist/index.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "lint": "eslint src/**/*.ts",
+    "format": "prettier --write src/**/*.ts"
+  },
+  "keywords": [
+    "package manager",
+    "wrapper",
+    "npm",
+    "yarn",
+    "pnpm",
+    "bun"
+  ],
+  "author": "levonk",
+  "license": "AGPL-3.0",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+   "zx": "^7.2.3"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
