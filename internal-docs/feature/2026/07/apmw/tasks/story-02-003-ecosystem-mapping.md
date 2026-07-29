@@ -59,19 +59,19 @@ Create the ecosystem mapping engine that maps non-canonical package managers to 
 
 ## Sub-Tasks
 
-- [ ] Create `src/ecosystem/mod.rs` with EcosystemMapper struct
+- [x] Create `src/ecosystem/mod.rs` with EcosystemMapper struct
   **Verify**: `cargo check` → exit 0
-- [ ] Create `src/ecosystem/mapping.rs` with mapping table from 2ndbrain Table 2
+- [x] Create `src/ecosystem/mapping.rs` with mapping table from 2ndbrain Table 2
   **Verify**: `cargo test mapping` → tests pass
-- [ ] Implement map_command function (apmw command + source manager -> canonical command)
+- [x] Implement map_command function (apmw command + source manager -> canonical command)
   **Verify**: `cargo test map_command` → tests pass
-- [ ] Implement suggest_canonical function (source manager -> canonical manager)
+- [x] Implement suggest_canonical function (source manager -> canonical manager)
   **Verify**: `cargo test suggest_canonical` → tests pass
-- [ ] Add unit tests for all mapping entries (pip->uv within Python, npm->pnpm, yarn->pnpm, bun->pnpm, yarn2->pnpm within Node — NO cross-ecosystem mappings)
+- [x] Add unit tests for all mapping entries (pip->uv within Python, npm->pnpm, yarn->pnpm, bun->pnpm, yarn2->pnpm within Node — NO cross-ecosystem mappings)
   **Verify**: `just test` → all pass
-- [ ] Add property-based tests with proptest for mapping consistency
+- [x] Add property-based tests with proptest for mapping consistency
   **Verify**: `cargo test proptest` → tests pass
-- [ ] Run `just validate`
+- [x] Run `just validate`
   **Verify**: `just validate` → all gates pass
 
 ## Relevant Files
@@ -82,14 +82,14 @@ Create the ecosystem mapping engine that maps non-canonical package managers to 
 
 ## Acceptance Criteria
 
-- [ ] pip maps to uv (within Python ecosystem)
-- [ ] npm/yarn/bun/yarn2 map to pnpm (within Node ecosystem)
-- [ ] NO cross-ecosystem mappings exist (e.g., uvx does NOT map to pnpm dlx)
-- [ ] map_command returns the correct canonical command for each apmw command (within-ecosystem only)
-- [ ] suggest_canonical returns the correct canonical manager
-- [ ] All mapping entries from 2ndbrain Table 2 are implemented
-- [ ] All unit and property-based tests pass
-- [ ] `just validate` passes
+- [x] pip maps to uv (within Python ecosystem)
+- [x] npm/yarn/bun/yarn2 map to pnpm (within Node ecosystem)
+- [x] NO cross-ecosystem mappings exist (e.g., uvx does NOT map to pnpm dlx)
+- [x] map_command returns the correct canonical command for each apmw command (within-ecosystem only)
+- [x] suggest_canonical returns the correct canonical manager
+- [x] All mapping entries from 2ndbrain Table 2 are implemented
+- [x] All unit and property-based tests pass
+- [x] `just validate` passes
 
 ## Test Plan
 
@@ -119,9 +119,9 @@ Create the ecosystem mapping engine that maps non-canonical package managers to 
 
 ## Definition of Done
 
-- [ ] All verification commands pass
-- [ ] Code, tests, docs updated; CI green; story file updated
-- [ ] No files outside in-scope list are modified
+- [x] All verification commands pass
+- [x] Code, tests, docs updated; CI green; story file updated
+- [x] No files outside in-scope list are modified
 
 ## STOP Conditions
 
