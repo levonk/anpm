@@ -1,6 +1,6 @@
 ---
 story_id: "06-002"
-story_title: "AI agent coding hooks (hard intercept + soft convention)"
+story_title: "AI agent coding hooks (hard intercept + soft convention, governance-aware)"
 story_name: "agent-hooks"
 prd_name: "apmw"
 prd_file: "internal-docs/feature/2026/07/apmw/feat-202607290558-apmw.md"
@@ -10,7 +10,7 @@ branch: "feature/current/apmw/story-06-002-agent-hooks"
 status: "todo"
 assignee: ""
 reviewer: ""
-dependencies: ["01-001", "03-002"]
+dependencies: ["01-001", "03-002", "04-003"]
 parallel_safe: true
 modules: ["src/agent/hooks.rs"]
 priority: "MUST"
@@ -23,14 +23,16 @@ updated_at: "2026-07-29"
 
 ## Summary
 
-Create the AI agent coding hooks that force AI agents through apmw's install-on-use hook for adding dependencies and running tools. Implement both a hard intercept (PATH shim that wraps package manager binaries like pip, npm, cargo) and a soft convention (instructions for agents to use apmw install). The hard intercept is opt-in via `apmw --install --intercept`; the soft convention is the default.
+Create the AI agent coding hooks that force AI agents through apmw's install-on-use hook for adding dependencies and running tools. Implement both a hard intercept (PATH shim that wraps package manager binaries like pip, npm, cargo) and a soft convention (instructions for agents to use `apmw add`). The hard intercept is opt-in via `apmw --install --intercept`; the soft convention is the default. Hooks are governance-aware: they respect governance rules (prefer/force/block/eject) from the governance engine (story 04-003), so intercepted calls are routed or blocked according to the active governance policy.
 
 ## Current State
 
 - **Relevant files and their roles:**
   - PRD FR-10.2 — AI agent coding hooks (hard intercept + soft convention)
+  - PRD FR-8 — Governance rules (prefer/force/block/eject) — hooks must respect governance
   - PRD Open Question 3 — Hard intercept vs soft convention
-  - `src/security/` — Security scanning (from story 03-002) must run on all intercepted installs
+  - `src/security/` — Security scanning (from story 03-002) must run on all intercepted adds
+  - `src/governance/` — Governance engine (from story 04-003) provides prefer/force/block/eject rules
 - **Repository conventions:** Module by feature/domain.
 - **Build/test/lint commands:**
   | Purpose   | Command                  | Expected Result |
@@ -44,11 +46,16 @@ Create the AI agent coding hooks that force AI agents through apmw's install-on-
 **In scope:**
 - Create `src/agent/hooks.rs` — AI agent coding hooks module
 - Implement hard intercept: PATH shim that wraps package manager binaries (pip, npm, yarn, cargo, go, apt, brew) so any invocation routes through apmw
-- The PATH shim intercepts the call, runs security scanning, then delegates to the real binary
+- The PATH shim intercepts the call, checks governance rules (prefer/force/block/eject from 04-003), runs security scanning, then delegates to the real binary (or the canonical alternative if governance forces it)
 - Hard intercept is opt-in via `apmw --install --intercept` (installs shims to a PATH dir that takes precedence)
 - Implement `apmw --uninstall --intercept` to remove shims
-- Implement soft convention: generate instructions for AI agents to use `apmw install` instead of calling package managers directly
+- Implement soft convention: generate instructions for AI agents to use `apmw add` instead of calling package managers directly
 - Soft convention is the default (no intercept installed)
+- Hooks are governance-aware: intercepted calls respect the active governance policy:
+  - **prefer**: warn and delegate to canonical manager (if installed)
+  - **force**: intercept and route through the canonical manager via wrapper
+  - **block**: error and prevent the call entirely
+  - **eject**: remove and block the non-canonical manager
 - Add unit tests for shim generation and interception logic
 - Add integration tests for intercepted installs
 
@@ -62,8 +69,10 @@ Create the AI agent coding hooks that force AI agents through apmw's install-on-
   **Verify**: `cargo check` → exit 0
 - [ ] Implement hard intercept: PATH shim generation for pip, npm, yarn, cargo, go, apt, brew
   **Verify**: `cargo test shim_generation` → tests pass
-- [ ] Implement shim interception logic (intercept -> security scan -> delegate)
+- [ ] Implement shim interception logic (intercept -> governance check -> security scan -> delegate)
   **Verify**: `cargo test interception` → tests pass
+- [ ] Implement governance-aware interception (respect prefer/force/block/eject from 04-003)
+  **Verify**: `cargo test governance_hooks` → tests pass
 - [ ] Implement `apmw --install --intercept` (install shims to PATH)
   **Verify**: `apmw --install --intercept` → shims installed
 - [ ] Implement `apmw --uninstall --intercept` (remove shims)
@@ -72,7 +81,7 @@ Create the AI agent coding hooks that force AI agents through apmw's install-on-
   **Verify**: `cargo test soft_convention` → tests pass
 - [ ] Add unit tests for shim generation and interception
   **Verify**: `just test` → all pass
-- [ ] Add integration tests for intercepted installs
+- [ ] Add integration tests for intercepted adds
   **Verify**: `just test` → all pass
 - [ ] Run `just validate`
   **Verify**: `just validate` → all gates pass
@@ -85,7 +94,8 @@ Create the AI agent coding hooks that force AI agents through apmw's install-on-
 ## Acceptance Criteria
 
 - [ ] Hard intercept generates PATH shims for pip, npm, yarn, cargo, go, apt, brew
-- [ ] Shims intercept calls, run security scanning, then delegate to the real binary
+- [ ] Shims intercept calls, check governance rules, run security scanning, then delegate to the real binary (or canonical alternative if governance forces)
+- [ ] Governance-aware hooks respect prefer/force/block/eject rules from the governance engine (04-003)
 - [ ] `apmw --install --intercept` installs shims
 - [ ] `apmw --uninstall --intercept` removes shims
 - [ ] Soft convention generates agent instructions
@@ -96,7 +106,7 @@ Create the AI agent coding hooks that force AI agents through apmw's install-on-
 ## Test Plan
 
 - Unit: `cargo test hooks` — hook and shim tests
-- Integration: Intercepted install tests
+- Integration: Intercepted add tests
 - Lint: `just lint`
 
 ## Observability
@@ -108,6 +118,7 @@ Create the AI agent coding hooks that force AI agents through apmw's install-on-
 ## Compliance
 
 - PRD FR-10.2 (AI agent coding hooks)
+- PRD FR-8 (governance rules — hooks are governance-aware)
 - PRD Open Question 3 (hard intercept vs soft convention — implement both)
 
 ## Risks & Mitigations
@@ -117,7 +128,7 @@ Create the AI agent coding hooks that force AI agents through apmw's install-on-
 
 ## Dependencies & Sequencing
 
-- Depends on: 01-001 (error types), 03-002 (security scanning)
+- Depends on: 01-001 (error types), 03-002 (security scanning), 04-003 (governance engine)
 - Unblocks: 07-001
 
 ## Definition of Done
@@ -137,7 +148,8 @@ Stop and report if:
 - New package manager shims can be added by extending the shim list
 - Reviewers should verify that shims are opt-in only and do not break existing workflows
 - Shims should be tested on Linux, macOS, and Windows
+- Reviewers should verify that governance rules (prefer/force/block/eject) are respected by intercepted calls
 
 ## Commit Conventions
 
-- `feat(hooks): add AI agent coding hooks with hard intercept and soft convention`
+- `feat(hooks): add governance-aware AI agent coding hooks with hard intercept and soft convention`

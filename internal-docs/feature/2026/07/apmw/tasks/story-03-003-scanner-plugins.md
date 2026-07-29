@@ -1,6 +1,6 @@
 ---
 story_id: "03-003"
-story_title: "Initial scanner plugins (cargo audit, npm audit, pip-audit, osv-scanner)"
+story_title: "Initial scanner plugins (cargo audit, npm audit, pip-audit, osv-scanner, trivy/grype for containers)"
 story_name: "scanner-plugins"
 prd_name: "apmw"
 prd_file: "internal-docs/feature/2026/07/apmw/feat-202607290558-apmw.md"
@@ -23,7 +23,7 @@ updated_at: "2026-07-29"
 
 ## Summary
 
-Implement the initial set of scanner plugins that implement the Scanner trait from story 03-002: cargo audit (for Rust), npm audit (for Node), pip-audit (for Python), and osv-scanner (multi-ecosystem). Each plugin follows the scanner contract: available, ensure, scan.
+Implement the initial set of scanner plugins that implement the Scanner trait from story 03-002: cargo audit (for Rust), npm audit (for Node), pip-audit (for Python), osv-scanner (multi-ecosystem), and trivy/grype (for container images). Each plugin follows the scanner contract: available, ensure, scan.
 
 ## Current State
 
@@ -45,7 +45,10 @@ Implement the initial set of scanner plugins that implement the Scanner trait fr
 - Create `src/security/plugins/npm_audit.rs` — npm audit scanner plugin
 - Create `src/security/plugins/pip_audit.rs` — pip-audit scanner plugin
 - Create `src/security/plugins/osv_scanner.rs` — osv-scanner scanner plugin
+- Create `src/security/plugins/trivy.rs` — trivy container image scanner plugin
+- Create `src/security/plugins/grype.rs` — grype container image scanner plugin
 - Each plugin implements the Scanner trait: available (check if binary is on PATH), ensure (install if missing), scan (run the scanner and parse results)
+- trivy and grype scan container images (docker/podman) for vulnerabilities
 - Parse scanner output into ScanResult (Safe, Risky with findings, Error)
 - Register all plugins in the plugin registry
 - Add unit tests with mock scanner output
@@ -65,6 +68,10 @@ Implement the initial set of scanner plugins that implement the Scanner trait fr
   **Verify**: `cargo test pip_audit` → tests pass
 - [ ] Create `src/security/plugins/osv_scanner.rs` implementing Scanner trait
   **Verify**: `cargo test osv_scanner` → tests pass
+- [ ] Create `src/security/plugins/trivy.rs` implementing Scanner trait (container images)
+  **Verify**: `cargo test trivy` → tests pass
+- [ ] Create `src/security/plugins/grype.rs` implementing Scanner trait (container images)
+  **Verify**: `cargo test grype` → tests pass
 - [ ] Register all plugins in the plugin registry
   **Verify**: `cargo test plugin_registry` → tests pass
 - [ ] Add unit tests with mock scanner output for each plugin
@@ -80,6 +87,8 @@ Implement the initial set of scanner plugins that implement the Scanner trait fr
 - `src/security/plugins/npm_audit.rs` — npm audit scanner
 - `src/security/plugins/pip_audit.rs` — pip-audit scanner
 - `src/security/plugins/osv_scanner.rs` — osv-scanner scanner
+- `src/security/plugins/trivy.rs` — trivy container image scanner
+- `src/security/plugins/grype.rs` — grype container image scanner
 - `src/security/plugins/mod.rs` — Register plugins
 
 ## Acceptance Criteria
@@ -88,6 +97,8 @@ Implement the initial set of scanner plugins that implement the Scanner trait fr
 - [ ] npm audit plugin correctly reports Safe/Risky/Error
 - [ ] pip-audit plugin correctly reports Safe/Risky/Error
 - [ ] osv-scanner plugin correctly reports Safe/Risky/Error
+- [ ] trivy plugin correctly scans container images and reports Safe/Risky/Error
+- [ ] grype plugin correctly scans container images and reports Safe/Risky/Error
 - [ ] Each plugin checks availability (binary on PATH)
 - [ ] Each plugin can ensure (install if missing)
 - [ ] All plugins are registered in the plugin registry
@@ -118,7 +129,7 @@ Implement the initial set of scanner plugins that implement the Scanner trait fr
 ## Dependencies & Sequencing
 
 - Depends on: 03-002 (security scanning orchestrator)
-- Unblocks: 04-001
+- Unblocks: 04-001, 04-004 (container packages — uses trivy/grype)
 
 ## Definition of Done
 
@@ -139,4 +150,4 @@ Stop and report if:
 
 ## Commit Conventions
 
-- `feat(security): add cargo audit, npm audit, pip-audit, osv-scanner plugins`
+- `feat(security): add cargo audit, npm audit, pip-audit, osv-scanner, trivy/grype scanner plugins`

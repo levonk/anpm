@@ -1,6 +1,6 @@
 ---
 story_id: "06-001"
-story_title: "MCP server (stdio transport, install/detect/scan tools)"
+story_title: "MCP server (stdio transport, add/detect/scan/clone tools)"
 story_name: "mcp-server"
 prd_name: "apmw"
 prd_file: "internal-docs/feature/2026/07/apmw/feat-202607290558-apmw.md"
@@ -10,7 +10,7 @@ branch: "feature/current/apmw/story-06-001-mcp-server"
 status: "todo"
 assignee: ""
 reviewer: ""
-dependencies: ["01-002", "01-003", "01-004", "02-001", "04-001", "04-002", "05-001"]
+dependencies: ["01-002", "01-003", "01-004", "02-001", "04-001", "04-002", "04-004", "05-001"]
 parallel_safe: true
 modules: ["src/agent/mcp.rs"]
 priority: "MUST"
@@ -23,7 +23,7 @@ updated_at: "2026-07-29"
 
 ## Summary
 
-Create the MCP (Model Context Protocol) server that AI agents connect to for install/detect/scan/clone operations. The server uses stdio transport for local agent integration (Claude Code, Codex, OpenCode). It exposes tools for install, detect, scan, clone, status, and list-jobs.
+Create the MCP (Model Context Protocol) server that AI agents connect to for add/detect/scan/clone operations. The server uses stdio transport for local agent integration (Claude Code, Codex, OpenCode). It exposes tools for add, detect, scan (including container image scanning), clone, status, and list-jobs.
 
 ## Current State
 
@@ -44,8 +44,9 @@ Create the MCP (Model Context Protocol) server that AI agents connect to for ins
 **In scope:**
 - Create `src/agent/mcp.rs` — MCP server (stdio transport)
 - Implement MCP protocol handshake and tool registration
-- Expose MCP tools: `apmw_install`, `apmw_detect`, `apmw_scan`, `apmw_clone`, `apmw_status`, `apmw_list_jobs`
-- Each tool delegates to the corresponding apmw module (install, detect, security, clone, audit, daemon)
+- Expose MCP tools: `apmw_add`, `apmw_detect`, `apmw_scan`, `apmw_scan_container`, `apmw_clone`, `apmw_status`, `apmw_list_jobs`
+- Each tool delegates to the corresponding apmw module (add, detect, security, containers, clone, audit, daemon)
+- `apmw_scan_container` delegates to the container scanning engine (story 04-004) for docker/podman image scanning via trivy/grype
 - Return results in MCP-compatible format (JSON)
 - Handle concurrent tool calls safely
 - Add unit tests for MCP protocol handling
@@ -62,12 +63,14 @@ Create the MCP (Model Context Protocol) server that AI agents connect to for ins
   **Verify**: `cargo check` → exit 0
 - [ ] Implement MCP protocol handshake and tool registration
   **Verify**: `cargo test mcp_handshake` → tests pass
-- [ ] Implement apmw_install tool (delegate to install engine)
-  **Verify**: `cargo test mcp_install` → tests pass
+- [ ] Implement apmw_add tool (delegate to add engine)
+  **Verify**: `cargo test mcp_add` → tests pass
 - [ ] Implement apmw_detect tool (delegate to detection engine)
   **Verify**: `cargo test mcp_detect` → tests pass
 - [ ] Implement apmw_scan tool (delegate to security orchestrator)
   **Verify**: `cargo test mcp_scan` → tests pass
+- [ ] Implement apmw_scan_container tool (delegate to container scanning engine)
+  **Verify**: `cargo test mcp_scan_container` → tests pass
 - [ ] Implement apmw_clone tool (delegate to clone engine)
   **Verify**: `cargo test mcp_clone` → tests pass
 - [ ] Implement apmw_status and apmw_list_jobs tools
@@ -90,7 +93,7 @@ Create the MCP (Model Context Protocol) server that AI agents connect to for ins
 
 - [ ] MCP server uses stdio transport
 - [ ] Protocol handshake works correctly
-- [ ] All 6 tools are registered and executable
+- [ ] All 7 tools are registered and executable (add, detect, scan, scan_container, clone, status, list_jobs)
 - [ ] Tools delegate to the correct apmw modules
 - [ ] Results are returned in MCP-compatible format
 - [ ] Concurrent tool calls are handled safely
@@ -120,7 +123,7 @@ Create the MCP (Model Context Protocol) server that AI agents connect to for ins
 
 ## Dependencies & Sequencing
 
-- Depends on: 01-002 (CLI), 01-003 (AXI output), 01-004 (daemon), 02-001 (detection), 04-001 (install), 04-002 (suggest), 05-001 (clone)
+- Depends on: 01-002 (CLI), 01-003 (AXI output), 01-004 (daemon), 02-001 (detection), 04-001 (add), 04-002 (suggest), 04-004 (containers), 05-001 (clone)
 - Unblocks: 07-001
 
 ## Definition of Done
@@ -143,4 +146,4 @@ Stop and report if:
 
 ## Commit Conventions
 
-- `feat(mcp): add MCP server with stdio transport and install/detect/scan/clone tools`
+- `feat(mcp): add MCP server with stdio transport and add/detect/scan/scan-container/clone tools`

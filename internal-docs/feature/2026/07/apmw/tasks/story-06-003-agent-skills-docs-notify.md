@@ -23,7 +23,7 @@ updated_at: "2026-07-29"
 
 ## Summary
 
-Create the installable Agent Skills (SKILL.md generation from the no-args home view), session integrations (Claude Code, Codex, OpenCode hooks), and AI agent docs notification (notify the agent where to find docs for an installed package). Follow ADR-20260607001 sections 42-43 for session integrations and installable skills.
+Create the installable Agent Skills (SKILL.md generation from the no-args home view), session integrations (Claude Code, Codex, OpenCode hooks), and AI agent docs notification (notify the agent where to find docs for an added package). Follow ADR-20260607001 sections 42-43 for session integrations and installable skills.
 
 ## Current State
 
@@ -70,7 +70,7 @@ Create the installable Agent Skills (SKILL.md generation from the no-args home v
 - Session integrations are idempotent (repeated installs are silent no-ops)
 - Session integrations are directory-scoped (show only state for current directory)
 - Session integrations are token-budget-aware (minimize per-session context)
-- Implement docs notification: after installing a package, notify the AI agent where to find docs
+- Implement docs notification: after adding a package, notify the AI agent where to find docs
 - Docs notification includes: package name, docs URL (from package metadata), local path to README/docs
 - Add unit tests for SKILL.md generation, session integration, docs notification
 
@@ -100,7 +100,7 @@ Create the installable Agent Skills (SKILL.md generation from the no-args home v
   **Verify**: `cargo check` → exit 0
 - [ ] Implement docs notification (package name, docs URL, local README path)
   **Verify**: `cargo test docs_notify` → tests pass
-- [ ] Wire docs notification into install flow
+- [ ] Wire docs notification into add flow
   **Verify**: `cargo test docs_integration` → tests pass
 - [ ] Add unit tests for all components
   **Verify**: `just test` → all pass
@@ -123,7 +123,7 @@ Create the installable Agent Skills (SKILL.md generation from the no-args home v
 - [ ] Session integrations are idempotent
 - [ ] Session integrations are directory-scoped
 - [ ] Docs notification includes package name, docs URL, local README path
-- [ ] Docs notification fires after install
+- [ ] Docs notification fires after add
 - [ ] All unit tests pass
 - [ ] `just validate` passes
 
@@ -151,7 +151,7 @@ Create the installable Agent Skills (SKILL.md generation from the no-args home v
 
 ## Dependencies & Sequencing
 
-- Depends on: 01-002 (CLI), 01-003 (AXI output), 04-001 (install engine)
+- Depends on: 01-002 (CLI), 01-003 (AXI output), 04-001 (add engine)
 - Unblocks: 07-001
 
 ## Definition of Done

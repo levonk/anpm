@@ -1,6 +1,6 @@
 ---
 story_id: "03-001"
-story_title: "Version resolution engine"
+story_title: "Version resolution engine (pinned/engine/latest/latest-minor + min-age-days supply-chain defense)"
 story_name: "version-resolution"
 prd_name: "apmw"
 prd_file: "internal-docs/feature/2026/07/apmw/feat-202607290558-apmw.md"
@@ -24,6 +24,12 @@ updated_at: "2026-07-29"
 ## Summary
 
 Create the version resolution engine that resolves package versions using this priority: pinned version if locked (from lockfile), latest version compatible with the engine in use, latest if unspecified, latest minor if only a major version is specified. The engine respects engine constraints from the project's config (e.g., `engines` in package.json, `python-requires` in setup.py, `rust-version` in Cargo.toml).
+
+**Supply-chain defense (min-age-days):** By default, the engine refuses versions published less than 2 days ago (default `min-age-days=2`). If the latest version is too new, the engine falls back to the most recent version published >= 2 days ago. This check applies only to auto-resolved versions (priority 3 "latest" and priority 4 "latest-minor"), NOT to pinned versions (priority 1) or engine-constrained versions (priority 2). The min-age-days threshold is overrideable via:
+- `--min-age-days 0` CLI flag (set to 0 to disable)
+- `--allow-new` CLI flag (alias for `--min-age-days 0`)
+- `min_age_days` config setting in TOML
+- `APMW_MIN_AGE_DAYS` environment variable
 
 ## Current State
 
@@ -49,7 +55,14 @@ Create the version resolution engine that resolves package versions using this p
 - Implement engine-compatible resolution (read engine constraints: engines in package.json, python-requires, rust-version in Cargo.toml)
 - Implement latest version resolution (query the package registry for the latest version)
 - Implement latest-minor resolution (query registry for latest minor of a specified major)
+- Implement min-age-days supply-chain defense:
+  - Default: refuse versions published < 2 days ago (min-age-days=2)
+  - Fall back to the most recent version published >= 2 days old
+  - Applies only to auto-resolved versions (priority 3 "latest" and priority 4 "latest-minor")
+  - Does NOT apply to pinned versions (priority 1) or engine-constrained versions (priority 2)
+  - Overrideable via `--min-age-days 0`, `--allow-new`, config `min_age_days`, env `APMW_MIN_AGE_DAYS`
 - Add unit tests for each resolution strategy
+- Add unit tests for min-age-days defense (refuse too-new, fall back to older, override behavior)
 - Add property-based tests with proptest for version comparison
 
 **Out of scope:**
@@ -70,6 +83,12 @@ Create the version resolution engine that resolves package versions using this p
   **Verify**: `cargo test latest` → tests pass
 - [ ] Implement latest-minor resolution (query registry for latest minor of major)
   **Verify**: `cargo test latest_minor` → tests pass
+- [ ] Implement min-age-days supply-chain defense (default 2 days, refuse too-new, fall back)
+  **Verify**: `cargo test min_age_days` → tests pass
+- [ ] Implement min-age-days overrides (`--min-age-days 0`, `--allow-new`, config, env var)
+  **Verify**: `cargo test min_age_overrides` → tests pass
+- [ ] Verify min-age-days does not apply to pinned or engine-constrained versions
+  **Verify**: `cargo test min_age_exclusions` → tests pass
 - [ ] Implement VersionResolution struct with serde
   **Verify**: `cargo test version_resolution` → tests pass
 - [ ] Add unit tests for each strategy with mock lockfiles and engine constraints
@@ -92,6 +111,11 @@ Create the version resolution engine that resolves package versions using this p
 - [ ] Engine-compatible version respects engine constraints
 - [ ] Latest version is queried from the registry
 - [ ] Latest-minor version is queried for a specified major
+- [ ] min-age-days defense refuses versions published < 2 days ago (default)
+- [ ] min-age-days falls back to the most recent version >= 2 days old
+- [ ] min-age-days applies only to auto-resolved versions (priority 3 and 4), not pinned or engine-constrained
+- [ ] `--min-age-days 0` and `--allow-new` override the defense
+- [ ] Config `min_age_days` and env `APMW_MIN_AGE_DAYS` override the defense
 - [ ] VersionResolution records the strategy used
 - [ ] All unit and property-based tests pass
 - [ ] `just validate` passes
@@ -114,6 +138,7 @@ Create the version resolution engine that resolves package versions using this p
 ## Risks & Mitigations
 
 - Risk: Registry API may be rate-limited or unavailable — Mitigation: Cache results, fall back to lockfile version if registry is unavailable
+- Risk: min-age-days may block a critical freshly-published security patch — Mitigation: Override via `--allow-new` or `--min-age-days 0`; document the override mechanisms clearly
 
 ## Dependencies & Sequencing
 
@@ -139,4 +164,4 @@ Stop and report if:
 
 ## Commit Conventions
 
-- `feat(version): add version resolution engine with pinned/engine/latest/latest-minor strategies`
+- `feat(version): add version resolution engine with pinned/engine/latest/latest-minor strategies and min-age-days supply-chain defense`

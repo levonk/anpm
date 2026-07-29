@@ -1,6 +1,6 @@
 ---
 story_id: "02-003"
-story_title: "Ecosystem mapping engine"
+story_title: "Ecosystem mapping engine (within-ecosystem only)"
 story_name: "ecosystem-mapping"
 prd_name: "apmw"
 prd_file: "internal-docs/feature/2026/07/apmw/feat-202607290558-apmw.md"
@@ -23,7 +23,9 @@ updated_at: "2026-07-29"
 
 ## Summary
 
-Create the ecosystem mapping engine that maps non-canonical package managers to their canonical alternatives: pip to uv, npm/yarn/bun/yarn2 to pnpm, uvx to pnpm dlx. The mapping table is defined in the 2ndbrain research Table 2 (apmw command to per-package-manager command mapping with 200+ references).
+Create the ecosystem mapping engine that maps non-canonical package managers to their canonical alternatives **within the same ecosystem only**: pip to uv within Python, npm/yarn/bun/yarn2 to pnpm within Node. Mapping is NEVER cross-ecosystem (e.g., uvx→pnpm dlx is WRONG — uvx is a Python-ecosystem tool and must not map to a Node-ecosystem tool). The mapping table is defined in the 2ndbrain research Table 2 (apmw command to per-package-manager command mapping with 200+ references).
+
+**Key principle:** Ecosystem mapping is WITHIN-ecosystem only. pip→uv (Python), npm→pnpm (Node). Never map across ecosystems.
 
 ## Current State
 
@@ -42,7 +44,7 @@ Create the ecosystem mapping engine that maps non-canonical package managers to 
 
 **In scope:**
 - Create `src/ecosystem/mod.rs` — Ecosystem mapping engine
-- Create `src/ecosystem/mapping.rs` — Mapping table (from 2ndbrain Table 2): pip->uv, npm/yarn/bun/yarn2->pnpm, uvx->pnpm dlx, and the canonical ad-hoc runner per ecosystem
+- Create `src/ecosystem/mapping.rs` — Mapping table (from 2ndbrain Table 2): pip->uv (Python), npm/yarn/bun/yarn2->pnpm (Node), and the canonical ad-hoc runner per ecosystem. **Mappings are within-ecosystem only — never cross-ecosystem.**
 - Implement `EcosystemMap` struct: source_manager, canonical_manager, command_mapping (HashMap of apmw_command -> manager_command)
 - Implement `map_command(apmw_command, source_manager) -> canonical_command` function
 - Implement `suggest_canonical(source_manager) -> canonical_manager` function
@@ -65,7 +67,7 @@ Create the ecosystem mapping engine that maps non-canonical package managers to 
   **Verify**: `cargo test map_command` → tests pass
 - [ ] Implement suggest_canonical function (source manager -> canonical manager)
   **Verify**: `cargo test suggest_canonical` → tests pass
-- [ ] Add unit tests for all mapping entries (pip->uv, npm->pnpm, yarn->pnpm, bun->pnpm, yarn2->pnpm, uvx->pnpm dlx)
+- [ ] Add unit tests for all mapping entries (pip->uv within Python, npm->pnpm, yarn->pnpm, bun->pnpm, yarn2->pnpm within Node — NO cross-ecosystem mappings)
   **Verify**: `just test` → all pass
 - [ ] Add property-based tests with proptest for mapping consistency
   **Verify**: `cargo test proptest` → tests pass
@@ -80,10 +82,10 @@ Create the ecosystem mapping engine that maps non-canonical package managers to 
 
 ## Acceptance Criteria
 
-- [ ] pip maps to uv
-- [ ] npm/yarn/bun/yarn2 map to pnpm
-- [ ] uvx maps to pnpm dlx
-- [ ] map_command returns the correct canonical command for each apmw command
+- [ ] pip maps to uv (within Python ecosystem)
+- [ ] npm/yarn/bun/yarn2 map to pnpm (within Node ecosystem)
+- [ ] NO cross-ecosystem mappings exist (e.g., uvx does NOT map to pnpm dlx)
+- [ ] map_command returns the correct canonical command for each apmw command (within-ecosystem only)
 - [ ] suggest_canonical returns the correct canonical manager
 - [ ] All mapping entries from 2ndbrain Table 2 are implemented
 - [ ] All unit and property-based tests pass
@@ -107,7 +109,8 @@ Create the ecosystem mapping engine that maps non-canonical package managers to 
 
 ## Risks & Mitigations
 
-- Risk: 2ndbrain Table 2 may not cover all required package managers — Mitigation: Start with the core mappings (pip, npm, yarn, bun, uvx), extend as needed
+- Risk: 2ndbrain Table 2 may not cover all required package managers — Mitigation: Start with the core within-ecosystem mappings (pip->uv, npm->pnpm), extend as needed
+- Risk: Cross-ecosystem mappings may be inadvertently introduced — Mitigation: Add a test that asserts no cross-ecosystem mappings exist; validate ecosystem boundaries in the mapping table
 
 ## Dependencies & Sequencing
 
@@ -133,4 +136,4 @@ Stop and report if:
 
 ## Commit Conventions
 
-- `feat(ecosystem): add ecosystem mapping engine with pip->uv, npm->pnpm mappings`
+- `feat(ecosystem): add ecosystem mapping engine with within-ecosystem pip->uv, npm->pnpm mappings`
