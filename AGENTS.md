@@ -16,11 +16,16 @@
 ## Project Overview
 
 apmw abstracts every package installer into one intelligent surface. It
-detects the correct package manager for the current project, installs tools
-and dependencies with install-on-use semantics, maps ecosystems (pip to uv,
-npm/yarn/bun to pnpm), scans PATH before installing, resolves versions
-intelligently, creates historyless clones with AST indexing, runs security
-scanning before install, and keeps an audit log.
+detects the correct package manager for the current project, adds tools and
+dependencies with install-on-use semantics (distinguishing runtime vs.
+development/build-time deps via `--dev`), maps within-ecosystem alternatives
+to canonical runners (pip to uv within Python, npm/yarn/bun to pnpm within
+Node — never across ecosystems), scans PATH before adding, resolves versions
+intelligently with a default 2-day minimum-release-age supply-chain defense,
+reads governance rules (prefer/force/block/eject) from the levonk-packages
+governance spec, collects anonymized tool-usage telemetry, supports container
+packages (docker/podman images), creates historyless clones with AST
+indexing, runs security scanning before add, and keeps an audit log.
 
 The tool runs as a Rust daemon (tokio "full") with a thin CLI over a local
 socket. Background agents handle clone, scan, and index operations. The CLI

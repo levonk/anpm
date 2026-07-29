@@ -34,28 +34,32 @@
 | 01-004 | Daemon skeleton (tokio, local socket, job manager) | 01 | [ ] Todo |  | true | — | 02-001, 05-001, 06-001 | src/daemon/ | feature/current/apmw/story-01-004-daemon-skeleton |
 | 01-005 | Audit log writer | 01 | [ ] Todo |  | true | — | 02-001, 03-001, 04-001, 05-001 | src/audit/ | feature/current/apmw/story-01-005-audit-log-writer |
 
-### Phase 02 — Detection + PATH Scan + Ecosystem Mapping
+### Phase 02 — Detection + PATH Scan + Ecosystem Mapping + CLI Override
 
 | Story ID | Title | Phase | Status | Assignee | Parallel-safe | Dependencies | Dependants | Modules | Branch |
 |---|---|---:|---|---|---|---|---|---|---|
 | 02-001 | Package manager detection engine | 02 | [ ] Todo |  | true | 01-001, 01-002, 01-003, 01-004, 01-005 | 03-001, 04-001, 06-001 | src/detect/ | feature/current/apmw/story-02-001-detection-engine |
 | 02-002 | PATH scanner (cli-tool-discovery integration) | 02 | [ ] Todo |  | true | 01-001 | 04-001 | src/path_scan/ | feature/current/apmw/story-02-002-path-scanner |
-| 02-003 | Ecosystem mapping engine | 02 | [ ] Todo |  | true | 01-001 | 04-001, 04-002 | src/ecosystem/ | feature/current/apmw/story-02-003-ecosystem-mapping |
+| 02-003 | Ecosystem mapping engine (within-ecosystem only) | 02 | [ ] Todo |  | true | 01-001 | 04-001, 04-002 | src/ecosystem/ | feature/current/apmw/story-02-003-ecosystem-mapping |
+| 02-004 | `--manager <name>` CLI override | 02 | [ ] Todo |  | true | 01-002, 02-001 | 04-001 | src/cli.rs | feature/current/apmw/story-02-004-manager-override |
 
-### Phase 03 — Version Resolution + Security Scanning
+### Phase 03 — Version Resolution (with min-age-days) + Security Scanning
 
 | Story ID | Title | Phase | Status | Assignee | Parallel-safe | Dependencies | Dependants | Modules | Branch |
 |---|---|---:|---|---|---|---|---|---|---|
-| 03-001 | Version resolution engine | 03 | [ ] Todo |  | true | 01-001, 01-005, 02-001 | 04-001 | src/version/ | feature/current/apmw/story-03-001-version-resolution |
+| 03-001 | Version resolution engine (pinned/engine/latest/latest-minor + min-age-days supply-chain defense) | 03 | [ ] Todo |  | true | 01-001, 01-005, 02-001 | 04-001 | src/version/ | feature/current/apmw/story-03-001-version-resolution |
 | 03-002 | Security scanning orchestrator (two-phase) | 03 | [ ] Todo |  | true | 01-001 | 04-001, 06-002 | src/security/ | feature/current/apmw/story-03-002-security-scanning |
-| 03-003 | Initial scanner plugins (cargo audit, npm audit, pip-audit, osv-scanner) | 03 | [ ] Todo |  | true | 03-002 | 04-001 | src/security/plugins/ | feature/current/apmw/story-03-003-scanner-plugins |
+| 03-003 | Initial scanner plugins (cargo audit, npm audit, pip-audit, osv-scanner, trivy/grype for containers) | 03 | [ ] Todo |  | true | 03-002 | 04-001, 04-004 | src/security/plugins/ | feature/current/apmw/story-03-003-scanner-plugins |
 
-### Phase 04 — Install Engine + Alternative Suggestions
+### Phase 04 — Add Engine + Dev Deps + Governance + Containers + Telemetry + Suggestions
 
 | Story ID | Title | Phase | Status | Assignee | Parallel-safe | Dependencies | Dependants | Modules | Branch |
 |---|---|---:|---|---|---|---|---|---|---|
-| 04-001 | Install engine (install-on-use, devbox+rtk routing) | 04 | [ ] Todo |  | false | 01-002, 01-003, 01-005, 02-001, 02-002, 02-003, 03-001, 03-002, 03-003 | 05-001, 06-001, 06-003 | src/install/ | feature/current/apmw/story-04-001-install-engine |
-| 04-002 | Alternative suggestions engine | 04 | [ ] Todo |  | true | 02-003 | 06-001 | src/install/suggest.rs | feature/current/apmw/story-04-002-alternative-suggestions |
+| 04-001 | Add engine (runtime + --dev deps, install-on-use, devbox+rtk routing, --manager override) | 04 | [ ] Todo |  | false | 01-002, 01-003, 01-005, 02-001, 02-002, 02-003, 02-004, 03-001, 03-002, 03-003 | 05-001, 06-001, 06-003 | src/install/ | feature/current/apmw/story-04-001-add-engine |
+| 04-002 | Alternative suggestions engine (within-ecosystem only) | 04 | [ ] Todo |  | true | 02-003 | 06-001 | src/install/suggest.rs | feature/current/apmw/story-04-002-alternative-suggestions |
+| 04-003 | Governance engine (reads prefer/force/block/eject from levonk-packages spec) | 04 | [ ] Todo |  | true | 01-001, 02-003 | 06-002 | src/governance/ | feature/current/apmw/story-04-003-governance-engine |
+| 04-004 | Container package support (docker/podman image pull/scan/list, compose detection) | 04 | [ ] Todo |  | true | 02-001, 03-003 | 06-001 | src/containers/ | feature/current/apmw/story-04-004-container-packages |
+| 04-005 | Anonymized telemetry collector (categorical usage, opt-out, non-blocking) | 04 | [ ] Todo |  | true | 01-001 | 07-002 | src/telemetry/ | feature/current/apmw/story-04-005-telemetry-collector |
 
 ### Phase 05 — Historyless Clone + AST Indexing
 
@@ -67,8 +71,8 @@
 
 | Story ID | Title | Phase | Status | Assignee | Parallel-safe | Dependencies | Dependants | Modules | Branch |
 |---|---|---:|---|---|---|---|---|---|---|
-| 06-001 | MCP server (stdio transport, install/detect/scan tools) | 06 | [ ] Todo |  | true | 01-002, 01-003, 01-004, 02-001, 04-001, 04-002, 05-001 | 07-001 | src/agent/mcp.rs | feature/current/apmw/story-06-001-mcp-server |
-| 06-002 | AI agent coding hooks (hard intercept + soft convention) | 06 | [ ] Todo |  | true | 01-001, 03-002 | 07-001 | src/agent/hooks.rs | feature/current/apmw/story-06-002-agent-hooks |
+| 06-001 | MCP server (stdio transport, add/detect/scan tools) | 06 | [ ] Todo |  | true | 01-002, 01-003, 01-004, 02-001, 04-001, 04-002, 04-004, 05-001 | 07-001 | src/agent/mcp.rs | feature/current/apmw/story-06-001-mcp-server |
+| 06-002 | AI agent coding hooks (hard intercept + soft convention, governance-aware) | 06 | [ ] Todo |  | true | 01-001, 03-002, 04-003 | 07-001 | src/agent/hooks.rs | feature/current/apmw/story-06-002-agent-hooks |
 | 06-003 | Installable Agent Skills + session integrations + docs notification | 06 | [ ] Todo |  | true | 01-002, 01-003, 04-001 | 07-001 | src/agent/skills.rs, src/agent/docs_notify.rs | feature/current/apmw/story-06-003-agent-skills-docs-notify |
 
 ### Phase 07 — Multi-Ecosystem Release + CI/CD + Documentation
