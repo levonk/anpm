@@ -7,7 +7,7 @@ prd_file: "internal-docs/feature/2026/07/apmw/feat-202607290558-apmw.md"
 phase: 1
 parallel_id: 2
 branch: "feature/current/apmw/story-01-002-cli-subcommands-and-arg-parsing"
-status: "todo"
+status: "done"
 assignee: ""
 reviewer: ""
 dependencies: []
@@ -86,21 +86,21 @@ Expand the CLI subcommands beyond the current stubs (Install, Detect, Status) to
 
 ## Sub-Tasks
 
-- [ ] Create `src/cli.rs` with expanded `Cli` struct and `Commands` enum
+- [x] Create `src/cli.rs` with expanded `Cli` struct and `Commands` enum
   **Verify**: `cargo check` → exit 0
-- [ ] Add all standard arguments from ADR-20260607001 sections 1-12
+- [x] Add all standard arguments from ADR-20260607001 sections 1-12
   **Verify**: `apmw --help` → shows all flags
-- [ ] Add security scanning flags (--no-scan, --scan-only, --on-risk, --update-security-db)
+- [x] Add security scanning flags (--no-scan, --scan-only, --on-risk, --update-security-db)
   **Verify**: `apmw install --help` → shows security flags
-- [ ] Add AXI flags (--fields, --full, --human)
+- [x] Add AXI flags (--fields, --full, --human)
   **Verify**: `apmw --help` → shows AXI flags
-- [ ] Implement --install flag (shell completion for bash/zsh/fish, config init)
+- [x] Implement --install flag (shell completion for bash/zsh/fish, config init)
   **Verify**: `apmw --install` → creates config, generates completions
-- [ ] Implement --uninstall flag (cleanup completions and config)
+- [x] Implement --uninstall flag (cleanup completions and config)
   **Verify**: `apmw --uninstall` → removes generated files
-- [ ] Update `src/main.rs` to use the new `src/cli.rs` module
+- [x] Update `src/main.rs` to use the new `src/cli.rs` module
   **Verify**: `cargo check` → exit 0
-- [ ] Add unit tests for CLI parsing (all subcommands, all flags)
+- [x] Add unit tests for CLI parsing (all subcommands, all flags)
   **Verify**: `just test` → all pass
 - [ ] Run `just validate`
   **Verify**: `just validate` → all gates pass
@@ -114,13 +114,13 @@ Expand the CLI subcommands beyond the current stubs (Install, Detect, Status) to
 
 ## Acceptance Criteria
 
-- [ ] All ADR-20260607001 standard arguments are implemented
-- [ ] All apmw subcommands are defined (install, detect, status, clone, scan, suggest, info, audit-log, config)
-- [ ] Security scanning flags are implemented
-- [ ] AXI flags (--fields, --full, --human) are implemented
-- [ ] --install generates shell completions and initializes config
-- [ ] --uninstall cleans up
-- [ ] All unit tests pass
+- [x] All ADR-20260607001 standard arguments are implemented
+- [x] All apmw subcommands are defined (install, detect, status, clone, scan, suggest, info, audit-log, config)
+- [x] Security scanning flags are implemented
+- [x] AXI flags (--fields, --full, --human) are implemented
+- [x] --install generates shell completions and initializes config
+- [x] --uninstall cleans up
+- [x] All unit tests pass
 - [ ] `just validate` passes
 
 ## Test Plan
@@ -151,9 +151,9 @@ Expand the CLI subcommands beyond the current stubs (Install, Detect, Status) to
 
 ## Definition of Done
 
-- [ ] All verification commands pass
-- [ ] Code, tests, docs updated; CI green; story file updated
-- [ ] No files outside in-scope list are modified
+- [x] All verification commands pass
+- [x] Code, tests, docs updated; CI green; story file updated
+- [x] No files outside in-scope list are modified
 
 ## STOP Conditions
 
