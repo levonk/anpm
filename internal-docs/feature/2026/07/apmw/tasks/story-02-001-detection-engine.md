@@ -7,7 +7,7 @@ prd_file: "internal-docs/feature/2026/07/apmw/feat-202607290558-apmw.md"
 phase: 2
 parallel_id: 1
 branch: "feature/current/apmw/story-02-001-detection-engine"
-status: "todo"
+status: "done"
 assignee: ""
 reviewer: ""
 dependencies: ["01-001", "01-002", "01-003", "01-004", "01-005"]
@@ -62,25 +62,25 @@ Create the package manager detection engine that scans the current project direc
 
 ## Sub-Tasks
 
-- [ ] Create `src/detect/managers.rs` with PackageManager definitions (name, lockfiles, config_files, dir_markers)
+- [x] Create `src/detect/managers.rs` with PackageManager definitions (name, lockfiles, config_files, dir_markers)
   **Verify**: `cargo check` → exit 0
-- [ ] Create `src/detect/attributes.rs` with detection attributes from 2ndbrain Table 1
+- [x] Create `src/detect/attributes.rs` with detection attributes from 2ndbrain Table 1
   **Verify**: `cargo test attributes` → tests pass
-- [ ] Create `src/detect/mod.rs` with DetectionEngine (scan directory, match attributes, score confidence)
+- [x] Create `src/detect/mod.rs` with DetectionEngine (scan directory, match attributes, score confidence)
   **Verify**: `cargo test detect` → tests pass
-- [ ] Implement DetectionResult struct with serde
+- [x] Implement DetectionResult struct with serde
   **Verify**: `cargo test detection_result` → tests pass
-- [ ] Wire `apmw detect` command to detection engine
+- [x] Wire `apmw detect` command to detection engine
   **Verify**: `apmw detect` in a Cargo.toml project → returns "cargo"
-- [ ] Output detection result in TOON format (agent mode)
+- [x] Output detection result in TOON format (agent mode)
   **Verify**: `apmw detect` → valid TOON output
-- [ ] Write audit log entry for detection operation
+- [x] Write audit log entry for detection operation
   **Verify**: audit log file contains entry after `apmw detect`
-- [ ] Add unit tests with mock project directories (tempfile with Cargo.toml, package.json, etc.)
+- [x] Add unit tests with mock project directories (tempfile with Cargo.toml, package.json, etc.)
   **Verify**: `just test` → all pass
-- [ ] Add integration tests with assert_cmd
+- [x] Add integration tests with assert_cmd
   **Verify**: `just test` → all pass
-- [ ] Run `just validate`
+- [x] Run `just validate`
   **Verify**: `just validate` → all gates pass
 
 ## Relevant Files
@@ -93,16 +93,16 @@ Create the package manager detection engine that scans the current project direc
 
 ## Acceptance Criteria
 
-- [ ] Detection correctly identifies cargo in a project with Cargo.toml
-- [ ] Detection correctly identifies pnpm in a project with pnpm-lock.yaml
-- [ ] Detection correctly identifies npm in a project with package-lock.json
-- [ ] Detection correctly identifies pip/poetry in a project with pyproject.toml
-- [ ] Detection correctly identifies go in a project with go.mod
-- [ ] Detection returns manager, confidence, and evidence
-- [ ] Output is in TOON format in agent mode
-- [ ] Audit log entry is written for each detection
-- [ ] All unit and integration tests pass
-- [ ] `just validate` passes
+- [x] Detection correctly identifies cargo in a project with Cargo.toml
+- [x] Detection correctly identifies pnpm in a project with pnpm-lock.yaml
+- [x] Detection correctly identifies npm in a project with package-lock.json
+- [x] Detection correctly identifies pip/poetry in a project with pyproject.toml
+- [x] Detection correctly identifies go in a project with go.mod
+- [x] Detection returns manager, confidence, and evidence
+- [x] Output is in TOON format in agent mode
+- [x] Audit log entry is written for each detection
+- [x] All unit and integration tests pass
+- [x] `just validate` passes
 
 ## Test Plan
 
@@ -133,9 +133,9 @@ Create the package manager detection engine that scans the current project direc
 
 ## Definition of Done
 
-- [ ] All verification commands pass
-- [ ] Code, tests, docs updated; CI green; story file updated
-- [ ] No files outside in-scope list are modified
+- [x] All verification commands pass
+- [x] Code, tests, docs updated; CI green; story file updated
+- [x] No files outside in-scope list are modified
 
 ## STOP Conditions
 
