@@ -31,6 +31,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 indicatif = "0.17"
 toml = "0.8"
 dirs = "5"
+anstyle = "1"
 
 [dev-dependencies]
 tokio-test = "0.4"
