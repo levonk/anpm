@@ -7,7 +7,7 @@ prd_file: "internal-docs/feature/2026/07/apmw/feat-202607290558-apmw.md"
 phase: 2
 parallel_id: 2
 branch: "feature/current/apmw/story-02-002-path-scanner"
-status: "todo"
+status: "done"
 assignee: ""
 reviewer: ""
 dependencies: ["01-001"]
@@ -58,23 +58,23 @@ Create the PATH scanner that checks if a tool is already installed before attemp
 
 ## Sub-Tasks
 
-- [ ] Create `src/path_scan/mod.rs` with PathScanner struct
+- [x] Create `src/path_scan/mod.rs` with PathScanner struct
   **Verify**: `cargo check` → exit 0
-- [ ] Create `src/path_scan/discovery.rs` with cli-tool-discovery integration
+- [x] Create `src/path_scan/discovery.rs` with cli-tool-discovery integration
   **Verify**: `cargo test discovery` → tests pass
-- [ ] Implement devbox-aware resolution (check DEVBOX_SHELL env first)
+- [x] Implement devbox-aware resolution (check DEVBOX_SHELL env first)
   **Verify**: `cargo test devbox_resolution` → tests pass
-- [ ] Implement wrapper detection (mise, flox, direnv, nix)
+- [x] Implement wrapper detection (mise, flox, direnv, nix)
   **Verify**: `cargo test wrapper_detection` → tests pass
-- [ ] Implement PATH location scanning (30+ locations)
+- [x] Implement PATH location scanning (30+ locations)
   **Verify**: `cargo test path_scan` → tests pass
-- [ ] Implement repo-root fallback dirs
+- [x] Implement repo-root fallback dirs
   **Verify**: `cargo test repo_fallback` → tests pass
-- [ ] Implement ScanResult enum (Found, Wrapper, NotFound) with serde
+- [x] Implement ScanResult enum (Found, Wrapper, NotFound) with serde
   **Verify**: `cargo test scan_result` → tests pass
-- [ ] Add unit tests with mock PATH environments
+- [x] Add unit tests with mock PATH environments
   **Verify**: `just test` → all pass
-- [ ] Run `just validate`
+- [x] Run `just validate`
   **Verify**: `just validate` → all gates pass
 
 ## Relevant Files
@@ -85,14 +85,14 @@ Create the PATH scanner that checks if a tool is already installed before attemp
 
 ## Acceptance Criteria
 
-- [ ] Scanner finds tools on PATH in under 50ms (PRD NFR-1.2)
-- [ ] Devbox-aware resolution checks DEVBOX_SHELL first
-- [ ] Wrapper detection covers mise, flox, direnv, nix
-- [ ] PATH scanning covers 30+ standard locations
-- [ ] Repo-root fallback checks $REPO_ROOT/bin, scripts/, .local/bin
-- [ ] ScanResult correctly reports Found, Wrapper, or NotFound
-- [ ] All unit and integration tests pass
-- [ ] `just validate` passes
+- [x] Scanner finds tools on PATH in under 50ms (PRD NFR-1.2)
+- [x] Devbox-aware resolution checks DEVBOX_SHELL first
+- [x] Wrapper detection covers mise, flox, direnv, nix
+- [x] PATH scanning covers 30+ standard locations
+- [x] Repo-root fallback checks $REPO_ROOT/bin, scripts/, .local/bin
+- [x] ScanResult correctly reports Found, Wrapper, or NotFound
+- [x] All unit and integration tests pass
+- [x] `just validate` passes
 
 ## Test Plan
 
@@ -121,9 +121,9 @@ Create the PATH scanner that checks if a tool is already installed before attemp
 
 ## Definition of Done
 
-- [ ] All verification commands pass
-- [ ] Code, tests, docs updated; CI green; story file updated
-- [ ] No files outside in-scope list are modified
+- [x] All verification commands pass
+- [x] Code, tests, docs updated; CI green; story file updated
+- [x] No files outside in-scope list are modified
 
 ## STOP Conditions
 
