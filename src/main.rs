@@ -8,6 +8,8 @@ use clap_complete::{generate, Shell as CompleteShell};
 
 use apmw::cli::{Cli, Commands, Shell};
 use apmw::config;
+use apmw::daemon::{DaemonManager, JobId};
+use apmw::error::ApmwError;
 
 fn main() -> anyhow::Result<()> {
   let cli = Cli::parse();
@@ -20,16 +22,93 @@ fn main() -> anyhow::Result<()> {
     return run_uninstall();
   }
 
+  // --daemon: run the daemon process directly.
+  if cli.global.daemon {
+    let rt = tokio::runtime::Runtime::new()?;
+    return rt.block_on(async {
+      let manager = DaemonManager::new();
+      manager.start().await.map_err(|e| anyhow::anyhow!(e))
+    });
+  }
+
+  // The remaining daemon-related flags (--list-jobs, --cancel-job) and
+  // subcommands that may need the daemon are handled in an async runtime.
+  let rt = tokio::runtime::Runtime::new()?;
+  rt.block_on(async_main(cli))
+}
+
+/// Async entry point for daemon-aware dispatch.
+async fn async_main(cli: Cli) -> anyhow::Result<()> {
+  // --no-daemon: force synchronous in-process operation.
+  let no_daemon = cli.global.no_daemon;
+
   if cli.global.list_jobs {
-    println!("No background jobs running.");
+    if no_daemon {
+      // In --no-daemon mode there is no daemon to query; report empty.
+      println!("No background jobs (--no-daemon mode).");
+      return Ok(());
+    }
+    let manager = DaemonManager::new();
+    if !manager.is_running().await {
+      println!("Daemon is not running. No background jobs.");
+      return Ok(());
+    }
+    let jobs = manager.list_jobs().await.map_err(|e| anyhow::anyhow!(e))?;
+    if jobs.is_empty() {
+      println!("No background jobs running.");
+    } else {
+      println!(
+        "{:<16} {:<10} {:<10} DESCRIPTION",
+        "JOB_ID", "STATUS", "KIND"
+      );
+      for job in &jobs {
+        println!(
+          "{:<16} {:<10} {:<10} {}",
+          job.id.as_str(),
+          job.status.to_string(),
+          job.kind.0,
+          job.description,
+        );
+      }
+    }
     return Ok(());
   }
 
   if let Some(job_id) = &cli.global.cancel_job {
-    println!("Cancelling job: {job_id}");
+    if no_daemon {
+      return Err(anyhow::anyhow!(ApmwError::Daemon(
+        "--cancel-job requires the daemon, but --no-daemon was set".to_string()
+      )));
+    }
+    let manager = DaemonManager::new();
+    if !manager.is_running().await {
+      return Err(anyhow::anyhow!(ApmwError::Daemon(
+        "daemon is not running; cannot cancel job".to_string()
+      )));
+    }
+    let id = JobId::new(job_id.clone());
+    let status = manager
+      .cancel_job(&id)
+      .await
+      .map_err(|e| anyhow::anyhow!(e))?;
+    println!("Job {job_id} cancelled (status: {status}).");
     return Ok(());
   }
 
+  // For subcommands that require background operations, enforce --no-daemon.
+  if no_daemon {
+    if let Some(Commands::Clone { .. }) = cli.command {
+      return Err(anyhow::anyhow!(ApmwError::Daemon(
+        "clone requires the daemon, but --no-daemon was set".to_string()
+      )));
+    }
+  }
+
+  dispatch_subcommand(cli).await
+}
+
+/// Dispatch subcommands (non-daemon-related logic).
+async fn dispatch_subcommand(cli: Cli) -> anyhow::Result<()> {
   match cli.command {
     Some(Commands::Install {
       package,
