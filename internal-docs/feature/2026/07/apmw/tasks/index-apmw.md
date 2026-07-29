@@ -39,7 +39,7 @@
 | Story ID | Title | Phase | Status | Assignee | Parallel-safe | Dependencies | Dependants | Modules | Branch |
 |---|---|---:|---|---|---|---|---|---|---|
 | 02-001 | Package manager detection engine | 02 | [x] Done |  | true | 01-001, 01-002, 01-003, 01-004, 01-005 | 03-001, 04-001, 06-001 | src/detect/ | feature/current/apmw/story-02-001-detection-engine |
-| 02-002 | PATH scanner (cli-tool-discovery integration) | 02 | [ ] Todo |  | true | 01-001 | 04-001 | src/path_scan/ | feature/current/apmw/story-02-002-path-scanner |
+| 02-002 | PATH scanner (cli-tool-discovery integration) | 02 | [x] Done |  | true | 01-001 | 04-001 | src/path_scan/ | feature/current/apmw/story-02-002-path-scanner |
 | 02-003 | Ecosystem mapping engine (within-ecosystem only) | 02 | [ ] Todo |  | true | 01-001 | 04-001, 04-002 | src/ecosystem/ | feature/current/apmw/story-02-003-ecosystem-mapping |
 | 02-004 | `--manager <name>` CLI override | 02 | [ ] Todo |  | true | 01-002, 02-001 | 04-001 | src/cli.rs | feature/current/apmw/story-02-004-manager-override |
 
