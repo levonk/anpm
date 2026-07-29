@@ -7,7 +7,7 @@ prd_file: "internal-docs/feature/2026/07/apmw/feat-202607290558-apmw.md"
 phase: 1
 parallel_id: 5
 branch: "feature/current/apmw/story-01-005-audit-log-writer"
-status: "todo"
+status: "done"
 assignee: ""
 reviewer: ""
 dependencies: []
@@ -18,7 +18,7 @@ risk_level: "low"
 tags: ["feat", "foundation", "audit", "logging"]
 due: "2026-08-15"
 created_at: "2026-07-29"
-updated_at: "2026-07-29"
+updated_at: "2026-07-30"
 ---
 
 ## Summary
@@ -59,25 +59,25 @@ Create the audit log writer that records every install/detect/clone/scan operati
 
 ## Sub-Tasks
 
-- [ ] Create `src/audit/mod.rs` and `src/audit/log.rs`
+- [x] Create `src/audit/mod.rs` and `src/audit/log.rs`
   **Verify**: `cargo check` → exit 0
-- [ ] Define `AuditLogEntry` struct with serde derive
+- [x] Define `AuditLogEntry` struct with serde derive
   **Verify**: `cargo test audit_entry` → tests pass
-- [ ] Implement XDG path resolution for audit log location
+- [x] Implement XDG path resolution for audit log location
   **Verify**: `cargo test audit_path` → tests pass
-- [ ] Implement append-only writer with disk flush before success return
+- [x] Implement append-only writer with disk flush before success return
   **Verify**: `cargo test audit_write` → tests pass
-- [ ] Implement retention period with auto-prune on startup
+- [x] Implement retention period with auto-prune on startup
   **Verify**: `cargo test audit_retention` → tests pass
-- [ ] Implement terminal type detection (login/interactive/non-interactive)
+- [x] Implement terminal type detection (login/interactive/non-interactive)
   **Verify**: `cargo test terminal_detection` → tests pass
-- [ ] Implement caller program detection
+- [x] Implement caller program detection
   **Verify**: `cargo test caller_detection` → tests pass
-- [ ] Implement export command (JSONL format)
+- [x] Implement export command (JSONL format)
   **Verify**: `cargo test audit_export` → tests pass
-- [ ] Add integration tests with tempfile
+- [x] Add integration tests with tempfile
   **Verify**: `just test` → all pass
-- [ ] Run `just validate`
+- [x] Run `just validate`
   **Verify**: `just validate` → all gates pass
 
 ## Relevant Files
@@ -88,15 +88,15 @@ Create the audit log writer that records every install/detect/clone/scan operati
 
 ## Acceptance Criteria
 
-- [ ] Audit log entries are written to `${XDG_CACHE_HOME:-$HOME/.cache}/apmw/audit.log`
-- [ ] Each entry records timestamp, request, action, terminal_type, caller_program, tools_used
-- [ ] Log is append-only and flushed to disk before returning success
-- [ ] Retention period auto-prunes old entries on startup
-- [ ] Export command produces JSONL output
-- [ ] Terminal type detection works (login/interactive/non-interactive)
-- [ ] Caller program detection works
-- [ ] All unit and integration tests pass
-- [ ] `just validate` passes
+- [x] Audit log entries are written to `${XDG_CACHE_HOME:-$HOME/.cache}/apmw/audit.log`
+- [x] Each entry records timestamp, request, action, terminal_type, caller_program, tools_used
+- [x] Log is append-only and flushed to disk before returning success
+- [x] Retention period auto-prunes old entries on startup
+- [x] Export command produces JSONL output
+- [x] Terminal type detection works (login/interactive/non-interactive)
+- [x] Caller program detection works
+- [x] All unit and integration tests pass
+- [x] `just validate` passes
 
 ## Test Plan
 
@@ -126,9 +126,9 @@ Create the audit log writer that records every install/detect/clone/scan operati
 
 ## Definition of Done
 
-- [ ] All verification commands pass
-- [ ] Code, tests, docs updated; CI green; story file updated
-- [ ] No files outside in-scope list are modified
+- [x] All verification commands pass
+- [x] Code, tests, docs updated; CI green; story file updated
+- [x] No files outside in-scope list are modified
 
 ## STOP Conditions
 
