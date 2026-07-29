@@ -7,7 +7,7 @@ prd_file: "internal-docs/feature/2026/07/apmw/feat-202607290558-apmw.md"
 phase: 1
 parallel_id: 4
 branch: "feature/current/apmw/story-01-004-daemon-skeleton"
-status: "todo"
+status: "done"
 assignee: ""
 reviewer: ""
 dependencies: []
@@ -73,21 +73,21 @@ Create the daemon skeleton using tokio "full" as the async runtime. Implement a 
 
 ## Sub-Tasks
 
-- [ ] Create `src/daemon/mod.rs` with DaemonManager (start, stop, status, auto-spawn)
+- [x] Create `src/daemon/mod.rs` with DaemonManager (start, stop, status, auto-spawn)
   **Verify**: `cargo check` → exit 0
-- [ ] Create `src/daemon/socket.rs` with local socket IPC (Unix domain socket, named pipe on Windows)
+- [x] Create `src/daemon/socket.rs` with local socket IPC (Unix domain socket, named pipe on Windows)
   **Verify**: `cargo test socket` → tests pass
-- [ ] Create `src/daemon/jobs.rs` with JobManager (job ID, status tracking, cancellation)
+- [x] Create `src/daemon/jobs.rs` with JobManager (job ID, status tracking, cancellation)
   **Verify**: `cargo test jobs` → tests pass
-- [ ] Implement auto-spawn logic (detect first async op, spawn daemon if not running)
+- [x] Implement auto-spawn logic (detect first async op, spawn daemon if not running)
   **Verify**: `cargo test auto_spawn` → tests pass
-- [ ] Implement --no-daemon synchronous fallback with clear error message
+- [x] Implement --no-daemon synchronous fallback with clear error message
   **Verify**: `cargo test sync_fallback` → tests pass
-- [ ] Implement SIGINT (exit 130) and SIGHUP (config reload) signal handlers
+- [x] Implement SIGINT (exit 130) and SIGHUP (config reload) signal handlers
   **Verify**: `cargo test signals` → tests pass
-- [ ] Add integration tests for daemon spawn and socket communication
+- [x] Add integration tests for daemon spawn and socket communication
   **Verify**: `just test` → all pass
-- [ ] Run `just validate`
+- [x] Run `just validate`
   **Verify**: `just validate` → all gates pass
 
 ## Relevant Files
@@ -100,15 +100,15 @@ Create the daemon skeleton using tokio "full" as the async runtime. Implement a 
 
 ## Acceptance Criteria
 
-- [ ] Daemon starts and listens on a local socket
-- [ ] Auto-spawn works on first async operation
-- [ ] --no-daemon forces synchronous operation
-- [ ] --list-jobs returns job status with job ID
-- [ ] --cancel-job cancels a specific job
-- [ ] Platform fallback provides clear error message
-- [ ] SIGINT exits with code 130, SIGHUP reloads config
-- [ ] All unit and integration tests pass
-- [ ] `just validate` passes
+- [x] Daemon starts and listens on a local socket
+- [x] Auto-spawn works on first async operation
+- [x] --no-daemon forces synchronous operation
+- [x] --list-jobs returns job status with job ID
+- [x] --cancel-job cancels a specific job
+- [x] Platform fallback provides clear error message
+- [x] SIGINT exits with code 130, SIGHUP reloads config
+- [x] All unit and integration tests pass
+- [x] `just validate` passes
 
 ## Test Plan
 
@@ -141,9 +141,9 @@ Create the daemon skeleton using tokio "full" as the async runtime. Implement a 
 
 ## Definition of Done
 
-- [ ] All verification commands pass
-- [ ] Code, tests, docs updated; CI green; story file updated
-- [ ] No files outside in-scope list are modified
+- [x] All verification commands pass
+- [x] Code, tests, docs updated; CI green; story file updated
+- [x] No files outside in-scope list are modified
 
 ## STOP Conditions
 
