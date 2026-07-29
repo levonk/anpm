@@ -28,7 +28,7 @@
 
 | Story ID | Title | Phase | Status | Assignee | Parallel-safe | Dependencies | Dependants | Modules | Branch |
 |---|---|---:|---|---|---|---|---|---|---|
-| 01-001 | Expand error types and config module | 01 | [ ] Todo |  | true | — | 02-001, 02-002, 03-001, 05-001, 06-002 | src/error.rs, src/config/ | feature/current/apmw/story-01-001-expand-error-types-and-config |
+| 01-001 | Expand error types and config module | 01 | [x] Done |  | true | — | 02-001, 02-002, 03-001, 05-001, 06-002 | src/error.rs, src/config/ | feature/current/apmw/story-01-001-expand-error-types-and-config |
 | 01-002 | CLI subcommands and argument parsing | 01 | [ ] Todo |  | true | — | 02-001, 04-001, 06-001, 06-003 | src/cli.rs, src/main.rs | feature/current/apmw/story-01-002-cli-subcommands-and-arg-parsing |
 | 01-003 | AXI output module (TOON encoder, minimal schemas, truncation) | 01 | [ ] Todo |  | true | — | 02-001, 04-001, 06-001 | src/output/ | feature/current/apmw/story-01-003-axi-output-module |
 | 01-004 | Daemon skeleton (tokio, local socket, job manager) | 01 | [ ] Todo |  | true | — | 02-001, 05-001, 06-001 | src/daemon/ | feature/current/apmw/story-01-004-daemon-skeleton |
