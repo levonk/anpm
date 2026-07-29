@@ -6,10 +6,13 @@
 use clap::{CommandFactory, Parser};
 use clap_complete::{generate, Shell as CompleteShell};
 
+use apmw::audit::{detect_caller_program, detect_terminal_type, AuditLogEntry, AuditLogWriter};
 use apmw::cli::{Cli, Commands, Shell};
 use apmw::config;
 use apmw::daemon::{DaemonManager, JobId};
+use apmw::detect::DetectionEngine;
 use apmw::error::ApmwError;
+use apmw::output::OutputDispatcher;
 
 fn main() -> anyhow::Result<()> {
   let cli = Cli::parse();
@@ -122,7 +125,71 @@ async fn dispatch_subcommand(cli: Cli) -> anyhow::Result<()> {
       }
     }
     Some(Commands::Detect) => {
-      println!("Detecting package manager...");
+      let engine = DetectionEngine::new();
+      let dir = std::env::current_dir()?;
+
+      let results = engine.detect(&dir)?;
+
+      // Write audit log entry.
+      let detected_names: Vec<String> = results
+        .iter()
+        .map(|r| r.manager.clone())
+        .collect();
+      let action = if detected_names.is_empty() {
+        "no package manager detected".to_string()
+      } else {
+        format!("detected: {}", detected_names.join(", "))
+      };
+      let request = "detect".to_string();
+      let terminal_type = detect_terminal_type();
+      let caller_program = detect_caller_program();
+      let tools_used = detected_names.clone();
+      let entry = AuditLogEntry::now(
+        request,
+        action,
+        terminal_type,
+        caller_program,
+        tools_used,
+      );
+      if let Ok(writer) = AuditLogWriter::new() {
+        let _ = writer.append(&entry);
+      }
+
+      // Output in TOON (agent mode) or human-readable (human mode).
+      let mut dispatcher = OutputDispatcher::from_flags(
+        cli.global.human,
+        cli.global.json,
+        cli.global.fields.as_deref(),
+        cli.global.full,
+      );
+      // Use detection-specific schema fields instead of the default package schema.
+      dispatcher.schema = apmw::output::Schema::with_fields_str(
+        vec![
+          "manager".into(),
+          "display_name".into(),
+          "ecosystem".into(),
+          "confidence".into(),
+        ],
+        cli.global.fields.as_deref(),
+      );
+
+      if results.is_empty() {
+        let help = vec![
+          "apmw detect --human".to_string(),
+          "apmw install <package>".to_string(),
+        ];
+        println!("{}", dispatcher.render_empty(&help));
+      } else {
+        let items: Vec<serde_json::Value> = results
+          .iter()
+          .map(|r| serde_json::to_value(r).unwrap_or(serde_json::json!({})))
+          .collect();
+        let help = vec![
+          format!("apmw install <package> --manager {}", results[0].manager),
+          "apmw detect --human".to_string(),
+        ];
+        println!("{}", dispatcher.render_list(&items, &help));
+      }
     }
     Some(Commands::Status) => {
       println!("apmw v{}", apmw::version());

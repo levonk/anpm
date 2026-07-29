@@ -8,6 +8,7 @@ pub mod audit;
 pub mod cli;
 pub mod config;
 pub mod daemon;
+pub mod detect;
 pub mod error;
 pub mod output;
 
@@ -15,6 +16,7 @@ pub use audit::{AuditLogEntry, AuditLogWriter, TerminalType};
 pub use cli::{Cli, Commands};
 pub use config::ApmwConfig;
 pub use daemon::{DaemonManager, DaemonStatus, JobId, JobManager, JobStatus};
+pub use detect::{DetectionEngine, DetectionResult};
 pub use error::{ApmwError, Result};
 pub use output::{AgentFormat, OutputDispatcher, OutputMode, Schema, TruncationConfig};
 
