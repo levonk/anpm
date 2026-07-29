@@ -4,9 +4,11 @@
 //! correct package manager, installs tools with install-on-use semantics, and
 //! runs security scanning before install.
 
+pub mod cli;
 pub mod config;
 pub mod error;
 
+pub use cli::{Cli, Commands};
 pub use config::ApmwConfig;
 pub use error::{ApmwError, Result};
 
