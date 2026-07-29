@@ -1,0 +1,25 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.17.3/.schema/devbox.schema.json",
+  "packages": [
+    "github:nixos/nixpkgs/25.05#rustc",
+    "github:nixos/nixpkgs/25.05#cargo",
+    "github:nixos/nixpkgs/25.05#clippy",
+    "github:nixos/nixpkgs/25.05#rustfmt",
+    "github:nixos/nixpkgs/25.05#cargo-audit",
+    "github:nixos/nixpkgs/25.05#just"
+  ],
+  "shell": {
+    "init_hook": [
+      "just bootstrap_impl"
+    ],
+    "scripts": {
+      "bootstrap": "just bootstrap_impl",
+      "build": "just build_impl",
+      "test": "just test_impl",
+      "dev": "just dev_impl",
+      "lint": "just lint_impl",
+      "format": "just format_impl",
+      "clean": "just clean_impl"
+    }
+  }
+}

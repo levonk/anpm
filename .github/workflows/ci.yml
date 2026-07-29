@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  fmt:
+    name: Format check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jetify-com/devbox-action@v0.10.0
+        with:
+          enable-cache: true
+      - run: devbox run -- just format_impl -- --check
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jetify-com/devbox-action@v0.10.0
+        with:
+          enable-cache: true
+      - run: devbox run -- just lint_impl
+
+  test:
+    name: Test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        rust: [stable, beta]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jetify-com/devbox-action@v0.10.0
+        with:
+          enable-cache: true
+      - run: devbox run -- just test_impl
+
+  build:
+    name: Build (release)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jetify-com/devbox-action@v0.10.0
+        with:
+          enable-cache: true
+      - run: devbox run -- just build_impl
+
+  audit:
+    name: Security audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jetify-com/devbox-action@v0.10.0
+        with:
+          enable-cache: true
+      - run: devbox run -- just audit_impl
+
+  doc:
+    name: Documentation build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jetify-com/devbox-action@v0.10.0
+        with:
+          enable-cache: true
+      - run: devbox run -- cargo doc --no-deps

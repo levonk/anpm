@@ -1,0 +1,32 @@
+[procMacro]
+enable = true
+
+[diagnostics]
+enable = true
+disabled = ["unresolved-proc-macro"]
+
+[hover]
+actions.enable = true
+
+[inlayHints]
+bindingModeHints.enable = true
+chainingHints.enable = true
+closingBraceHints.minLines = 25
+closureReturnTypeHints.enable = "with_block"
+lifetimeElisionHints.enable = "never"
+maxExtednedHints = 512
+parameterHints.enable = true
+renderColons = true
+typeHints.enable = true
+
+[completion]
+autoimport.enable = true
+autoself.enable = true
+callable.snippets = "fill_arguments"
+postfix.enable = true
+fullFunctionSignatures.enable = true
+
+[check]
+allTargets = true
+command = "clippy"
+extraArgs = ["--all-targets", "--all-features", "--", "-D", "warnings"]

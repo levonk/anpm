@@ -3,33 +3,9 @@
 .gitignore
 .gitattributes
 
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Virtual Environment
-.venv
-env/
-venv/
-ENV/
+# Rust build artifacts
+target/
+**/target/
 
 # IDE
 .vscode/
@@ -37,15 +13,33 @@ ENV/
 *.swp
 *.swo
 
-# Ansible
-*.retry
-
 # Local development
 .local/
 .cache/
-.coverage
-htmlcov/
+.env
+.env.local
+
+# Coverage
+*.lcov
+tarpaulin-report.html
 
 # System Files
 .DS_Store
 Thumbs.db
+
+# Devbox (not needed in container)
+devbox.json
+devbox.lock
+.nix-shell
+
+# CI / docs
+.github/
+.windsurf/
+AGENTS.md
+justfile
+.envrc
+rustfmt.toml
+clippy.toml
+.rust-analyzer.toml
+benches/
+tests/
