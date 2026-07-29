@@ -7,7 +7,7 @@ prd_file: "internal-docs/feature/2026/07/apmw/feat-202607290558-apmw.md"
 phase: 1
 parallel_id: 3
 branch: "feature/current/apmw/story-01-003-axi-output-module"
-status: "todo"
+status: "done"
 assignee: ""
 reviewer: ""
 dependencies: []
@@ -18,7 +18,7 @@ risk_level: "medium"
 tags: ["feat", "foundation", "axi", "toon", "output"]
 due: "2026-08-15"
 created_at: "2026-07-29"
-updated_at: "2026-07-29"
+updated_at: "2026-07-29T12:00:00Z"
 ---
 
 ## Summary
@@ -61,27 +61,27 @@ Create the AXI output module implementing TOON (Token-Oriented Object Notation) 
 
 ## Sub-Tasks
 
-- [ ] Create `src/output/mod.rs` with OutputDispatcher trait (agent mode vs human mode)
+- [x] Create `src/output/mod.rs` with OutputDispatcher trait (agent mode vs human mode)
   **Verify**: `cargo check` → exit 0
-- [ ] Create `src/output/toon.rs` with TOON encoder (serde_json::Value -> TOON string)
+- [x] Create `src/output/toon.rs` with TOON encoder (serde_json::Value -> TOON string)
   **Verify**: `cargo test toon` → encoder tests pass
-- [ ] Implement minimal schema filtering (select 3-4 fields, --fields flag support)
+- [x] Implement minimal schema filtering (select 3-4 fields, --fields flag support)
   **Verify**: `cargo test schema` → tests pass
-- [ ] Implement content truncation (preview + total size + --full hint)
+- [x] Implement content truncation (preview + total size + --full hint)
   **Verify**: `cargo test truncation` → tests pass
-- [ ] Implement pre-computed aggregates (total count in list output)
+- [x] Implement pre-computed aggregates (total count in list output)
   **Verify**: `cargo test aggregates` → tests pass
-- [ ] Implement definitive empty states
+- [x] Implement definitive empty states
   **Verify**: `cargo test empty_states` → tests pass
-- [ ] Implement structured errors on stdout (error + suggestion format)
+- [x] Implement structured errors on stdout (error + suggestion format)
   **Verify**: `cargo test structured_errors` → tests pass
-- [ ] Implement contextual disclosure (help[] array with 2-4 next steps)
+- [x] Implement contextual disclosure (help[] array with 2-4 next steps)
   **Verify**: `cargo test contextual_disclosure` → tests pass
-- [ ] Create `src/output/human.rs` with human-readable output (colors, formatting)
+- [x] Create `src/output/human.rs` with human-readable output (colors, formatting)
   **Verify**: `cargo test human_output` → tests pass
-- [ ] Add property-based tests with proptest for TOON encoder
+- [x] Add property-based tests with proptest for TOON encoder
   **Verify**: `cargo test proptest` → tests pass
-- [ ] Run `just validate`
+- [x] Run `just validate`
   **Verify**: `just validate` → all gates pass
 
 ## Relevant Files
@@ -93,16 +93,16 @@ Create the AXI output module implementing TOON (Token-Oriented Object Notation) 
 
 ## Acceptance Criteria
 
-- [ ] TOON encoder produces valid TOON from serde_json::Value
-- [ ] Minimal schemas default to 3-4 fields
-- [ ] Content truncation shows preview, total size, and --full hint
-- [ ] Pre-computed aggregates include total count
-- [ ] Empty states are definitive with context
-- [ ] Structured errors include description and suggestion
-- [ ] Contextual disclosure includes 2-4 next steps as complete commands
-- [ ] Agent mode is the default; human mode is opt-in
-- [ ] All unit and property-based tests pass
-- [ ] `just validate` passes
+- [x] TOON encoder produces valid TOON from serde_json::Value
+- [x] Minimal schemas default to 3-4 fields
+- [x] Content truncation shows preview, total size, and --full hint
+- [x] Pre-computed aggregates include total count
+- [x] Empty states are definitive with context
+- [x] Structured errors include description and suggestion
+- [x] Contextual disclosure includes 2-4 next steps as complete commands
+- [x] Agent mode is the default; human mode is opt-in
+- [x] All unit and property-based tests pass
+- [x] `just validate` passes
 
 ## Test Plan
 
@@ -132,9 +132,9 @@ Create the AXI output module implementing TOON (Token-Oriented Object Notation) 
 
 ## Definition of Done
 
-- [ ] All verification commands pass
-- [ ] Code, tests, docs updated; CI green; story file updated
-- [ ] No files outside in-scope list are modified
+- [x] All verification commands pass
+- [x] Code, tests, docs updated; CI green; story file updated
+- [x] No files outside in-scope list are modified
 
 ## STOP Conditions
 

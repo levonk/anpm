@@ -7,10 +7,12 @@
 pub mod cli;
 pub mod config;
 pub mod error;
+pub mod output;
 
 pub use cli::{Cli, Commands};
 pub use config::ApmwConfig;
 pub use error::{ApmwError, Result};
+pub use output::{AgentFormat, OutputDispatcher, OutputMode, Schema, TruncationConfig};
 
 /// Returns the version of the apmw library.
 pub fn version() -> &'static str {
