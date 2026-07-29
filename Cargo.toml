@@ -28,6 +28,8 @@ zeroize = "1.7"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 indicatif = "0.17"
+toml = "0.8"
+dirs = "5"
 
 [dev-dependencies]
 tokio-test = "0.4"

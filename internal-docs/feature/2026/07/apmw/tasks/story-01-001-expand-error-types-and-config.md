@@ -7,7 +7,7 @@ prd_file: "internal-docs/feature/2026/07/apmw/feat-202607290558-apmw.md"
 phase: 1
 parallel_id: 1
 branch: "feature/current/apmw/story-01-001-expand-error-types-and-config"
-status: "todo"
+status: "done"
 assignee: ""
 reviewer: ""
 dependencies: []
@@ -75,19 +75,19 @@ Expand the existing `src/error.rs` with new error variants for all apmw features
 
 ## Sub-Tasks
 
-- [ ] Expand `ApmwError` enum with new variants for all features
+- [x] Expand `ApmwError` enum with new variants for all features
   **Verify**: `cargo check` → exit 0
-- [ ] Add `toml` crate to Cargo.toml dependencies
+- [x] Add `toml` crate to Cargo.toml dependencies
   **Verify**: `cargo build` → exit 0
-- [ ] Create `src/config/mod.rs` with `ApmwConfig` struct (serde), config precedence chain, XDG path resolution
+- [x] Create `src/config/mod.rs` with `ApmwConfig` struct (serde), config precedence chain, XDG path resolution
   **Verify**: `cargo test config` → tests pass
-- [ ] Create `src/config/migration.rs` with auto-migration logic (detect legacy, .bak backup, validate)
+- [x] Create `src/config/migration.rs` with auto-migration logic (detect legacy, .bak backup, validate)
   **Verify**: `cargo test migration` → tests pass
-- [ ] Implement config file initialization (create default config with commented-out settings on first run)
+- [x] Implement config file initialization (create default config with commented-out settings on first run)
   **Verify**: `cargo test config_init` → tests pass
-- [ ] Add unit tests for all new error variants and config operations
+- [x] Add unit tests for all new error variants and config operations
   **Verify**: `just test` → all pass
-- [ ] Run `just validate` to confirm all quality gates pass
+- [x] Run `just validate` to confirm all quality gates pass
   **Verify**: `just validate` → all gates pass
 
 ## Relevant Files
@@ -100,12 +100,12 @@ Expand the existing `src/error.rs` with new error variants for all apmw features
 
 ## Acceptance Criteria
 
-- [ ] `ApmwError` has variants for all features listed in scope
-- [ ] Config module loads from XDG paths with correct precedence
-- [ ] Config file initialization creates a default config with commented-out settings
-- [ ] Config auto-migration creates .bak backup and validates migrated config
-- [ ] All unit tests pass
-- [ ] `just validate` passes with all 7 quality gates green
+- [x] `ApmwError` has variants for all features listed in scope
+- [x] Config module loads from XDG paths with correct precedence
+- [x] Config file initialization creates a default config with commented-out settings
+- [x] Config auto-migration creates .bak backup and validates migrated config
+- [x] All unit tests pass
+- [x] `just validate` passes with all 7 quality gates green
 
 ## Test Plan
 
@@ -138,9 +138,9 @@ Expand the existing `src/error.rs` with new error variants for all apmw features
 
 ## Definition of Done
 
-- [ ] All verification commands from sub-tasks pass
-- [ ] Code, tests, docs updated; CI green; story file updated
-- [ ] No files outside in-scope list are modified (`git status`)
+- [x] All verification commands from sub-tasks pass
+- [x] Code, tests, docs updated; CI green; story file updated
+- [x] No files outside in-scope list are modified (`git status`)
 
 ## STOP Conditions
 
