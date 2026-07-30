@@ -29,7 +29,7 @@ Create the PATH scanner that checks if a tool is already installed before attemp
 
 - **Relevant files and their roles:**
   - PRD FR-3 (sections FR-3.1 through FR-3.3) — PATH scanning requirements
-  - cli-tool-discovery.md at `/Users/micro/p/gh/levonk/skills-src/build/current/includes/cli-tool-discovery.md`
+  - cli-tool-discovery.md at `~/p/gh/levonk/skills-src/build/current/includes/cli-tool-discovery.md`
 - **Repository conventions:** Module by feature/domain. Use pub use in lib.rs.
 - **Build/test/lint commands:**
   | Purpose   | Command                  | Expected Result |

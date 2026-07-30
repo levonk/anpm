@@ -32,6 +32,8 @@ indicatif = "0.17"
 toml = "0.8"
 dirs = "5"
 anstyle = "1"
+ureq = { version = "=2.11.0", features = ["json", "tls"], default-features = false }
+chrono = { version = "0.4", default-features = false, features = ["clock", "std", "serde"] }
 
 [dev-dependencies]
 tokio-test = "0.4"

@@ -29,7 +29,7 @@ Create the multi-ecosystem packaging and release pipeline that ships apmw as npm
 
 - **Relevant files and their roles:**
   - PRD FR-12 (sections FR-12.1 through FR-12.3) — Multi-ecosystem release
-  - `levonk-packages/packaging/` at `/Users/micro/p/gh/levonk/levonk-packages/packaging/` — Generator pattern to mirror (alpine/debian/fedora/arch/brew/mise)
+  - `levonk-packages/packaging/` at `~/p/gh/levonk/levonk-packages/packaging/` — Generator pattern to mirror (alpine/debian/fedora/arch/brew/mise)
   - `Dockerfile` — Multi-stage build (rust:1.75-slim to debian:bookworm-slim)
   - `.github/workflows/ci.yml` — Existing CI pipeline
 - **Repository conventions:** Use devbox for builds. CI runs on GitHub Actions.
