@@ -34,6 +34,7 @@ dirs = "5"
 anstyle = "1"
 ureq = { version = "=2.11.0", features = ["json", "tls"], default-features = false }
 chrono = { version = "0.4", default-features = false, features = ["clock", "std", "serde"] }
+which = "7"
 
 [dev-dependencies]
 tokio-test = "0.4"
