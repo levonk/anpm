@@ -1,3 +1,5 @@
 - Read ~/p/gh/levonk/apmw/AGENTS.md
-- Run the skill ~/p/gh/levonk/skills-src/src/current/skills/software-dev/git-repository-management
-- on the apmw project
+- Run the skill git-repository-management, if it's missing do a `devbox run -- pnpm skills add levonk/skills-releases --all` 
+- on internal-docs/feature/
+- do not use `npx` or `npm` we use `devbox run -- pnpm dlx` or `devbox run -- pnpm` 
+- on this project
