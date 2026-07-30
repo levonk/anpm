@@ -1,5 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.17.3/.schema/devbox.schema.json",
+  "nixpkgs": {
+    "commit": "11cb3517b3af6af300dd6c055aeda73c9bf52c48"
+  },
   "packages": [
     "github:nixos/nixpkgs/25.05#rustc",
     "github:nixos/nixpkgs/25.05#cargo",

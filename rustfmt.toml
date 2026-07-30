@@ -8,5 +8,3 @@ reorder_modules = true
 remove_nested_parens = true
 use_field_init_shorthand = true
 force_explicit_abi = true
-empty_item_single_line = true
-struct_lit_single_line = true

@@ -1,0 +1,33 @@
+{
+  "lockfile_version": "1",
+  "packages": {
+    "github:NixOS/nixpkgs/11cb3517b3af6af300dd6c055aeda73c9bf52c48": {
+      "last_modified": "1970-01-01T00:00:00Z",
+      "resolved": "github:NixOS/nixpkgs/11cb3517b3af6af300dd6c055aeda73c9bf52c48"
+    },
+    "github:nixos/nixpkgs/25.05#cargo": {
+      "last_modified": "2025-05-23T18:56:20Z",
+      "resolved": "github:nixos/nixpkgs/11cb3517b3af6af300dd6c055aeda73c9bf52c48?lastModified=1748026580#cargo"
+    },
+    "github:nixos/nixpkgs/25.05#cargo-audit": {
+      "last_modified": "2025-05-23T18:56:20Z",
+      "resolved": "github:nixos/nixpkgs/11cb3517b3af6af300dd6c055aeda73c9bf52c48?lastModified=1748026580#cargo-audit"
+    },
+    "github:nixos/nixpkgs/25.05#clippy": {
+      "last_modified": "2025-05-23T18:56:20Z",
+      "resolved": "github:nixos/nixpkgs/11cb3517b3af6af300dd6c055aeda73c9bf52c48?lastModified=1748026580#clippy"
+    },
+    "github:nixos/nixpkgs/25.05#just": {
+      "last_modified": "2025-05-23T18:56:20Z",
+      "resolved": "github:nixos/nixpkgs/11cb3517b3af6af300dd6c055aeda73c9bf52c48?lastModified=1748026580#just"
+    },
+    "github:nixos/nixpkgs/25.05#rustc": {
+      "last_modified": "2025-05-23T18:56:20Z",
+      "resolved": "github:nixos/nixpkgs/11cb3517b3af6af300dd6c055aeda73c9bf52c48?lastModified=1748026580#rustc"
+    },
+    "github:nixos/nixpkgs/25.05#rustfmt": {
+      "last_modified": "2025-05-23T18:56:20Z",
+      "resolved": "github:nixos/nixpkgs/11cb3517b3af6af300dd6c055aeda73c9bf52c48?lastModified=1748026580#rustfmt"
+    }
+  }
+}
