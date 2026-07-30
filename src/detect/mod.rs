@@ -79,6 +79,60 @@ impl From<&DetectionEvidence> for EvidenceEntry {
   }
 }
 
+impl DetectionResult {
+  /// Create a synthetic detection result from a forced manager name.
+  ///
+  /// Used when `--manager <name>` is passed on the CLI to skip auto-detection.
+  /// Looks up the manager in the registry for display name, ecosystem, and
+  /// hierarchy. If the manager is not in the detection registry (e.g. `bun`,
+  /// `dnf`, `pacman`, `snap`, `flatpak`, `podman`), sensible defaults are used.
+  pub fn from_forced_manager(name: &str) -> Self {
+    let (display_name, ecosystem, hierarchy) = match find_manager(name) {
+      Some(m) => (
+        m.display_name.to_string(),
+        m.ecosystem.to_string(),
+        m.hierarchy.to_string(),
+      ),
+      None => {
+        // Managers not in the detection registry get default values.
+        let ecosystem = ecosystem_for_manager(name);
+        (name.to_string(), ecosystem.to_string(), "language".to_string())
+      }
+    };
+
+    tracing::info!(
+      manager = name,
+      "Creating forced detection result (source: cli-override)"
+    );
+
+    DetectionResult {
+      manager: name.to_string(),
+      display_name,
+      ecosystem,
+      hierarchy,
+      confidence: 1.0,
+      evidence: vec![EvidenceEntry {
+        path: "--manager CLI override".to_string(),
+        kind: "cli-override".to_string(),
+      }],
+    }
+  }
+}
+
+/// Determine the ecosystem for a manager that is not in the detection registry.
+///
+/// This covers managers like `bun`, `dnf`, `pacman`, `snap`, `flatpak`, and
+/// `podman` which are valid `--manager` overrides but not in the detection
+/// engine's `MANAGERS` array.
+fn ecosystem_for_manager(name: &str) -> Ecosystem {
+  match name {
+    "bun" => Ecosystem::Node,
+    "dnf" | "pacman" | "snap" | "flatpak" => Ecosystem::Os,
+    "podman" => Ecosystem::Container,
+    _ => Ecosystem::Unknown,
+  }
+}
+
 /// The detection engine — scans a directory and returns detection results.
 #[derive(Debug, Clone)]
 pub struct DetectionEngine;
@@ -773,5 +827,86 @@ mod tests {
       .find(|r| r.manager == "docker")
       .expect("docker should be detected from compose.yaml");
     assert!(docker.confidence > 0.0);
+  }
+
+  // --- Manager override tests (story 02-004) ---
+
+  #[test]
+  fn test_from_forced_manager_pnpm() {
+    let result = DetectionResult::from_forced_manager("pnpm");
+    assert_eq!(result.manager, "pnpm");
+    assert_eq!(result.ecosystem, "node");
+    assert_eq!(result.confidence, 1.0);
+    assert!(result.evidence.iter().any(|e| e.kind == "cli-override"));
+  }
+
+  #[test]
+  fn test_from_forced_manager_uv() {
+    let result = DetectionResult::from_forced_manager("uv");
+    assert_eq!(result.manager, "uv");
+    assert_eq!(result.ecosystem, "python");
+    assert_eq!(result.confidence, 1.0);
+  }
+
+  #[test]
+  fn test_from_forced_manager_cargo() {
+    let result = DetectionResult::from_forced_manager("cargo");
+    assert_eq!(result.manager, "cargo");
+    assert_eq!(result.ecosystem, "rust");
+    assert_eq!(result.confidence, 1.0);
+  }
+
+  #[test]
+  fn test_from_forced_manager_docker() {
+    let result = DetectionResult::from_forced_manager("docker");
+    assert_eq!(result.manager, "docker");
+    assert_eq!(result.ecosystem, "container");
+    assert_eq!(result.confidence, 1.0);
+  }
+
+  #[test]
+  fn test_from_forced_manager_bun_not_in_registry() {
+    // bun is a valid --manager value but not in the detection registry.
+    let result = DetectionResult::from_forced_manager("bun");
+    assert_eq!(result.manager, "bun");
+    assert_eq!(result.ecosystem, "node");
+    assert_eq!(result.confidence, 1.0);
+  }
+
+  #[test]
+  fn test_from_forced_manager_podman_not_in_registry() {
+    let result = DetectionResult::from_forced_manager("podman");
+    assert_eq!(result.manager, "podman");
+    assert_eq!(result.ecosystem, "container");
+    assert_eq!(result.confidence, 1.0);
+  }
+
+  #[test]
+  fn test_from_forced_manager_dnf_not_in_registry() {
+    let result = DetectionResult::from_forced_manager("dnf");
+    assert_eq!(result.manager, "dnf");
+    assert_eq!(result.ecosystem, "os");
+    assert_eq!(result.confidence, 1.0);
+  }
+
+  #[test]
+  fn test_from_forced_manager_has_cli_override_evidence() {
+    let result = DetectionResult::from_forced_manager("pnpm");
+    assert_eq!(result.evidence.len(), 1);
+    assert_eq!(result.evidence[0].path, "--manager CLI override");
+    assert_eq!(result.evidence[0].kind, "cli-override");
+  }
+
+  #[test]
+  fn test_from_forced_manager_skips_detection() {
+    // Verify that from_forced_manager produces a result without scanning a dir.
+    let result = DetectionResult::from_forced_manager("pnpm");
+    // The forced result should have confidence 1.0 (max), unlike real detection.
+    assert_eq!(result.confidence, 1.0);
+    // No file-based evidence — only the CLI override marker.
+    assert!(result
+      .evidence
+      .iter()
+      .all(|e| e.kind == "cli-override"));
   }
 }
