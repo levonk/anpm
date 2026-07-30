@@ -13,6 +13,7 @@ pub mod ecosystem;
 pub mod error;
 pub mod output;
 pub mod path_scan;
+pub mod version;
 
 pub use audit::{AuditLogEntry, AuditLogWriter, TerminalType};
 pub use cli::{Cli, Commands};
@@ -23,6 +24,10 @@ pub use ecosystem::{ApmwCommand, EcosystemMap, EcosystemMapper};
 pub use error::{ApmwError, Result};
 pub use output::{AgentFormat, OutputDispatcher, OutputMode, Schema, TruncationConfig};
 pub use path_scan::{PathScanner, ScanConfig, ScanResult, ScanSource};
+pub use version::{
+  MinAgeDaysConfig, RegistryClient, RegistryVersion, ResolutionStrategy, VersionResolution,
+  VersionResolver,
+};
 
 /// Returns the version of the apmw library.
 pub fn version() -> &'static str {
