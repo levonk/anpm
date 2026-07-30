@@ -11,6 +11,7 @@ pub mod daemon;
 pub mod detect;
 pub mod ecosystem;
 pub mod error;
+pub mod governance;
 pub mod output;
 pub mod path_scan;
 pub mod security;
@@ -23,6 +24,10 @@ pub use daemon::{DaemonManager, DaemonStatus, JobId, JobManager, JobStatus};
 pub use detect::{DetectionEngine, DetectionResult};
 pub use ecosystem::{ApmwCommand, EcosystemMap, EcosystemMapper};
 pub use error::{ApmwError, Result};
+pub use governance::{
+  GovernanceConfig, GovernanceEngine, GovernanceOutcome, GovernanceRule, GovernanceSpec,
+  GovernanceType, MockSpecClient, ReqwestSpecClient, SpecLoader, WrapperKind, WrapperSpec,
+};
 pub use output::{AgentFormat, OutputDispatcher, OutputMode, Schema, TruncationConfig};
 pub use path_scan::{PathScanner, ScanConfig, ScanResult, ScanSource};
 pub use security::{
