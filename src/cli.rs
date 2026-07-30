@@ -266,6 +266,15 @@ pub struct GlobalArgs {
     value_parser = manager_value_parser,
   )]
   pub manager: Option<String>,
+
+  // --- Telemetry flags (PRD FR-6) ---
+  /// Disable telemetry collection for this invocation.
+  #[arg(long, global = true)]
+  pub no_telemetry: bool,
+
+  /// Print the telemetry payload that would be sent without actually sending it.
+  #[arg(long, global = true)]
+  pub telemetry_preview: bool,
 }
 
 /// The top-level apmw CLI (ADR-20260607001).
@@ -871,5 +880,51 @@ mod tests {
       "Expected 29 valid managers, got {}",
       VALID_MANAGERS.len()
     );
+  }
+
+  // --- Telemetry flag tests (story 04-005) ---
+
+  #[test]
+  fn test_parse_no_telemetry_flag() {
+    let cli = Cli::try_parse_from(["apmw", "--no-telemetry", "status"]).unwrap();
+    assert!(cli.global.no_telemetry);
+  }
+
+  #[test]
+  fn test_parse_no_telemetry_flag_default_false() {
+    let cli = Cli::try_parse_from(["apmw", "status"]).unwrap();
+    assert!(!cli.global.no_telemetry);
+  }
+
+  #[test]
+  fn test_parse_no_telemetry_with_subcommand() {
+    let cli = Cli::try_parse_from(["apmw", "install", "express", "--no-telemetry"]).unwrap();
+    assert!(cli.global.no_telemetry);
+  }
+
+  #[test]
+  fn test_parse_telemetry_preview_flag() {
+    let cli = Cli::try_parse_from(["apmw", "--telemetry-preview", "status"]).unwrap();
+    assert!(cli.global.telemetry_preview);
+  }
+
+  #[test]
+  fn test_parse_telemetry_preview_default_false() {
+    let cli = Cli::try_parse_from(["apmw", "status"]).unwrap();
+    assert!(!cli.global.telemetry_preview);
+  }
+
+  #[test]
+  fn test_parse_telemetry_preview_with_subcommand() {
+    let cli = Cli::try_parse_from(["apmw", "detect", "--telemetry-preview"]).unwrap();
+    assert!(cli.global.telemetry_preview);
+  }
+
+  #[test]
+  fn test_parse_both_telemetry_flags() {
+    let cli =
+      Cli::try_parse_from(["apmw", "--no-telemetry", "--telemetry-preview", "status"]).unwrap();
+    assert!(cli.global.no_telemetry);
+    assert!(cli.global.telemetry_preview);
   }
 }

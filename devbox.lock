@@ -1,6 +1,26 @@
 {
   "lockfile_version": "1",
   "packages": {
+    "devbox": {
+      "resolved": "github:NixOS/nixpkgs/11cb3517b3af6af300dd6c055aeda73c9bf52c48#devbox",
+      "source": "nixpkg"
+    },
+    "difftastic": {
+      "resolved": "github:NixOS/nixpkgs/11cb3517b3af6af300dd6c055aeda73c9bf52c48#difftastic",
+      "source": "nixpkg"
+    },
+    "eza": {
+      "resolved": "github:NixOS/nixpkgs/11cb3517b3af6af300dd6c055aeda73c9bf52c48#eza",
+      "source": "nixpkg"
+    },
+    "fzf": {
+      "resolved": "github:NixOS/nixpkgs/11cb3517b3af6af300dd6c055aeda73c9bf52c48#fzf",
+      "source": "nixpkg"
+    },
+    "git": {
+      "resolved": "github:NixOS/nixpkgs/11cb3517b3af6af300dd6c055aeda73c9bf52c48#git",
+      "source": "nixpkg"
+    },
     "github:NixOS/nixpkgs/11cb3517b3af6af300dd6c055aeda73c9bf52c48": {
       "last_modified": "1970-01-01T00:00:00Z",
       "resolved": "github:NixOS/nixpkgs/11cb3517b3af6af300dd6c055aeda73c9bf52c48"
@@ -28,6 +48,10 @@
     "github:nixos/nixpkgs/25.05#rustfmt": {
       "last_modified": "2025-05-23T18:56:20Z",
       "resolved": "github:nixos/nixpkgs/11cb3517b3af6af300dd6c055aeda73c9bf52c48?lastModified=1748026580#rustfmt"
+    },
+    "just": {
+      "resolved": "github:NixOS/nixpkgs/11cb3517b3af6af300dd6c055aeda73c9bf52c48#just",
+      "source": "nixpkg"
     }
   }
 }

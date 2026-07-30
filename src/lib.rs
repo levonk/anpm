@@ -14,6 +14,7 @@ pub mod error;
 pub mod output;
 pub mod path_scan;
 pub mod security;
+pub mod telemetry;
 pub mod version;
 
 pub use audit::{AuditLogEntry, AuditLogWriter, TerminalType};
@@ -29,6 +30,10 @@ pub use security::{
   AggregatedVerdict, InstallAction, OnRiskMode, PackageScanOutcome, PackageScanRequest,
   ScanConfig as SecurityScanConfig, ScanOrchestrator, ScanReport, ScanResult as SecurityScanResult,
   Scanner, SecurityFinding, SecurityPosture, Severity, TelemetryPolicy,
+};
+pub use telemetry::{
+  ErrorCategory, HttpSender, MockSender, NoopSender, Outcome, TelemetryCollector, TelemetryCommand,
+  TelemetryEvent, TelemetryEventBuilder, TelemetrySender, TelemetryTerminalType, Timer,
 };
 pub use version::{
   MinAgeDaysConfig, RegistryClient, RegistryVersion, ResolutionStrategy, VersionResolution,

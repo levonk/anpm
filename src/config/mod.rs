@@ -34,6 +34,8 @@ pub struct EnvOverrides {
   pub min_release_age_days: Option<u32>,
   /// `APMW_AGENT_MODE` — override agent mode.
   pub agent_mode: Option<bool>,
+  /// `APMW_TELEMETRY` — override telemetry enabled flag.
+  pub telemetry: Option<bool>,
 }
 
 /// CLI argument overrides for config values.
@@ -49,6 +51,8 @@ pub struct CliOverrides {
   pub agent_mode: Option<bool>,
   /// Override config file path.
   pub config_file: Option<PathBuf>,
+  /// Override telemetry enabled flag.
+  pub telemetry: Option<bool>,
 }
 
 /// The full apmw configuration.
@@ -67,6 +71,12 @@ pub struct ApmwConfig {
   /// Whether agent mode (AXI/TOON) is enabled (ADR §36-45).
   #[serde(default)]
   pub agent_mode: bool,
+  /// Whether anonymized telemetry collection is enabled (PRD FR-6).
+  #[serde(default = "default_telemetry_enabled")]
+  pub telemetry: bool,
+  /// The telemetry collection endpoint URL (PRD FR-6).
+  #[serde(default = "default_telemetry_endpoint")]
+  pub telemetry_endpoint: String,
 }
 
 impl Default for ApmwConfig {
@@ -75,12 +85,24 @@ impl Default for ApmwConfig {
       daemon_enabled: false,
       min_release_age_days: default_min_release_age_days(),
       agent_mode: false,
+      telemetry: default_telemetry_enabled(),
+      telemetry_endpoint: default_telemetry_endpoint(),
     }
   }
 }
 
 fn default_min_release_age_days() -> u32 {
   2
+}
+
+/// Default telemetry enabled state: `true` (opt-out model).
+fn default_telemetry_enabled() -> bool {
+  true
+}
+
+/// Default telemetry endpoint URL.
+fn default_telemetry_endpoint() -> String {
+  "https://telemetry.apmw.dev/v1/event".to_string()
 }
 
 /// Resolved config file paths following the XDG Base Directory Specification.
@@ -159,6 +181,9 @@ pub fn load_env_overrides() -> EnvOverrides {
     agent_mode: std::env::var("APMW_AGENT_MODE")
       .ok()
       .and_then(|v| parse_bool(&v)),
+    telemetry: std::env::var("APMW_TELEMETRY")
+      .ok()
+      .and_then(|v| parse_bool(&v)),
   }
 }
 
@@ -180,6 +205,10 @@ struct PartialApmwConfig {
   min_release_age_days: Option<u32>,
   #[serde(default)]
   agent_mode: Option<bool>,
+  #[serde(default)]
+  telemetry: Option<bool>,
+  #[serde(default)]
+  telemetry_endpoint: Option<String>,
 }
 
 impl PartialApmwConfig {
@@ -194,6 +223,12 @@ impl PartialApmwConfig {
     if source.agent_mode.is_some() {
       target.agent_mode = source.agent_mode;
     }
+    if source.telemetry.is_some() {
+      target.telemetry = source.telemetry;
+    }
+    if source.telemetry_endpoint.is_some() {
+      target.telemetry_endpoint = source.telemetry_endpoint.clone();
+    }
   }
 
   /// Apply this partial config onto a fully-resolved [`ApmwConfig`].
@@ -206,6 +241,12 @@ impl PartialApmwConfig {
     }
     if let Some(v) = self.agent_mode {
       config.agent_mode = v;
+    }
+    if let Some(v) = self.telemetry {
+      config.telemetry = v;
+    }
+    if let Some(ref v) = self.telemetry_endpoint {
+      config.telemetry_endpoint = v.clone();
     }
   }
 }
@@ -281,6 +322,9 @@ fn apply_env(config: &mut ApmwConfig, env: &EnvOverrides) {
   if let Some(v) = env.agent_mode {
     config.agent_mode = v;
   }
+  if let Some(v) = env.telemetry {
+    config.telemetry = v;
+  }
 }
 
 fn apply_cli(config: &mut ApmwConfig, cli: &CliOverrides) {
@@ -292,6 +336,9 @@ fn apply_cli(config: &mut ApmwConfig, cli: &CliOverrides) {
   }
   if let Some(v) = cli.agent_mode {
     config.agent_mode = v;
+  }
+  if let Some(v) = cli.telemetry {
+    config.telemetry = v;
   }
 }
 
@@ -314,6 +361,13 @@ pub const DEFAULT_CONFIG_CONTENT: &str = "\
 
 # Whether agent mode (AXI/TOON output) is enabled (ADR §36-45).
 # agent_mode = false
+
+# Whether anonymized telemetry collection is enabled (PRD FR-6).
+# Set to false to disable telemetry. See --telemetry-preview for the payload.
+# telemetry = true
+
+# The telemetry collection endpoint URL (PRD FR-6).
+# telemetry_endpoint = \"https://telemetry.apmw.dev/v1/event\"
 ";
 
 /// Initialize a config file on first run.
@@ -389,13 +443,16 @@ mod tests {
     std::env::set_var("APMW_DAEMON_ENABLED", "true");
     std::env::set_var("APMW_MIN_RELEASE_AGE_DAYS", "7");
     std::env::set_var("APMW_AGENT_MODE", "1");
+    std::env::set_var("APMW_TELEMETRY", "false");
     let env = load_env_overrides();
     assert_eq!(env.daemon_enabled, Some(true));
     assert_eq!(env.min_release_age_days, Some(7));
     assert_eq!(env.agent_mode, Some(true));
+    assert_eq!(env.telemetry, Some(false));
     std::env::remove_var("APMW_DAEMON_ENABLED");
     std::env::remove_var("APMW_MIN_RELEASE_AGE_DAYS");
     std::env::remove_var("APMW_AGENT_MODE");
+    std::env::remove_var("APMW_TELEMETRY");
   }
 
   #[test]
@@ -536,6 +593,7 @@ mod tests {
       daemon_enabled: Some(false),
       min_release_age_days: None,
       agent_mode: None,
+      telemetry: None,
     };
     let cfg = load(&cli, &env, &paths).unwrap();
     assert!(!cfg.daemon_enabled); // env overrides local
@@ -554,11 +612,13 @@ mod tests {
       min_release_age_days: Some(14),
       agent_mode: Some(true),
       config_file: None,
+      telemetry: None,
     };
     let env = EnvOverrides {
       daemon_enabled: Some(false),
       min_release_age_days: Some(1),
       agent_mode: Some(false),
+      telemetry: None,
     };
     let cfg = load(&cli, &env, &paths).unwrap();
     assert!(cfg.daemon_enabled);
@@ -598,6 +658,8 @@ mod tests {
     assert!(!DEFAULT_CONFIG_CONTENT.contains("\ndaemon_enabled ="));
     assert!(!DEFAULT_CONFIG_CONTENT.contains("\nmin_release_age_days ="));
     assert!(!DEFAULT_CONFIG_CONTENT.contains("\nagent_mode ="));
+    assert!(!DEFAULT_CONFIG_CONTENT.contains("\ntelemetry ="));
+    assert!(!DEFAULT_CONFIG_CONTENT.contains("\ntelemetry_endpoint ="));
   }
 
   #[test]
@@ -606,6 +668,8 @@ mod tests {
       daemon_enabled: true,
       min_release_age_days: 5,
       agent_mode: true,
+      telemetry: true,
+      telemetry_endpoint: "https://example.com/v1/event".to_string(),
     };
     let toml_str = toml::to_string(&cfg).unwrap();
     let parsed: ApmwConfig = toml::from_str(&toml_str).unwrap();
@@ -627,11 +691,15 @@ mod tests {
       daemon_enabled: Some(true),
       min_release_age_days: Some(10),
       agent_mode: Some(true),
+      telemetry: Some(true),
+      telemetry_endpoint: Some("https://a.com".to_string()),
     };
     let source = PartialApmwConfig {
       daemon_enabled: Some(false),
       min_release_age_days: None, // unset, should not override
       agent_mode: Some(false),
+      telemetry: None,
+      telemetry_endpoint: None,
     };
     PartialApmwConfig::merge_into(&mut target, &source);
     assert_eq!(target.daemon_enabled, Some(false));
@@ -647,6 +715,7 @@ mod tests {
       min_release_age_days: Some(30),
       agent_mode: Some(true),
       config_file: None,
+      telemetry: None,
     };
     apply_cli(&mut config, &cli);
     assert!(config.daemon_enabled);
@@ -661,6 +730,7 @@ mod tests {
       daemon_enabled: Some(true),
       min_release_age_days: Some(9),
       agent_mode: None,
+      telemetry: None,
     };
     apply_env(&mut config, &env);
     assert!(config.daemon_enabled);
@@ -692,6 +762,7 @@ mod tests {
       daemon_enabled: None,
       min_release_age_days: Some(7),
       agent_mode: None,
+      telemetry: None,
     };
     // CLI: daemon_enabled=false (highest)
     let cli = CliOverrides {
@@ -699,6 +770,7 @@ mod tests {
       min_release_age_days: None,
       agent_mode: None,
       config_file: None,
+      telemetry: None,
     };
     let cfg = load(&cli, &env, &paths).unwrap();
     assert!(!cfg.daemon_enabled); // CLI wins
