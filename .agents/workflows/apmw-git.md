@@ -1,0 +1,3 @@
+- Read ~/p/gh/levonk/apmw/AGENTS.md
+- Run the skill ~/p/gh/levonk/skills-src/src/current/skills/software-dev/git-repository-management
+- on the apmw project
