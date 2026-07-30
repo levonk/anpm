@@ -6,6 +6,76 @@
 //! scanning flags, AXI agent-mode flags, and daemon control flags.
 
 use clap::{Args, Parser, Subcommand};
+use tracing::warn;
+
+/// The set of valid package manager names accepted by `--manager`.
+///
+/// Covers every supported manager across all ecosystems per PRD FR-1.3.
+/// New package managers can be added by extending this list.
+pub const VALID_MANAGERS: &[&str] = &[
+  // Node.js ecosystem
+  "pnpm",
+  "npm",
+  "yarn",
+  "bun",
+  // Python ecosystem
+  "uv",
+  "pip",
+  "poetry",
+  "pipenv",
+  "pdm",
+  "conda",
+  // Rust ecosystem
+  "cargo",
+  // Go ecosystem
+  "go",
+  // Ruby ecosystem
+  "gem",
+  // OS-level / OS-wrapper ecosystem
+  "brew",
+  "nix",
+  "devbox",
+  "apt",
+  "dnf",
+  "pacman",
+  "winget",
+  "snap",
+  "flatpak",
+  // Container / virtualization ecosystem
+  "helm",
+  "docker",
+  "podman",
+  // JVM ecosystem
+  "maven",
+  "gradle",
+  "sbt",
+  // .NET ecosystem
+  "dotnet",
+];
+
+/// Validates a manager name against the set of known package managers.
+///
+/// Returns the validated name on success, or an error message listing all
+/// valid options on failure.
+pub fn validate_manager_name(name: &str) -> Result<String, String> {
+  if VALID_MANAGERS.contains(&name) {
+    Ok(name.to_string())
+  } else {
+    let valid = VALID_MANAGERS.join(", ");
+    Err(format!(
+      "invalid manager '{name}'. Valid options: {valid}"
+    ))
+  }
+}
+
+/// Custom value parser for the `--manager` flag.
+fn manager_value_parser(s: &str) -> Result<String, String> {
+  let result = validate_manager_name(s);
+  if result.is_err() {
+    warn!(manager = s, "Invalid manager name provided via --manager");
+  }
+  result
+}
 
 /// Color output preference (ADR-20260607001 §5).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -210,6 +280,21 @@ pub struct GlobalArgs {
   /// Cancel a background job by ID.
   #[arg(long, value_name = "ID", global = true)]
   pub cancel_job: Option<String>,
+
+  // --- Manager override (PRD FR-1.3) ---
+  /// Override auto-detection and force a specific package manager.
+  ///
+  /// When set, detection is skipped entirely and the specified manager is
+  /// used. Valid values cover all supported package managers across
+  /// ecosystems. See `--help` for the full list.
+  #[arg(
+    long,
+    visible_alias = "use",
+    value_name = "NAME",
+    global = true,
+    value_parser = manager_value_parser,
+  )]
+  pub manager: Option<String>,
 }
 
 /// The top-level apmw CLI (ADR-20260607001).
@@ -253,10 +338,6 @@ pub enum Commands {
     /// Install as a development/build-time dependency.
     #[arg(long)]
     dev: bool,
-
-    /// Override the detected package manager.
-    #[arg(long, value_name = "NAME")]
-    manager: Option<String>,
   },
 
   /// Detect the package manager for the current project.
@@ -322,14 +403,9 @@ mod tests {
   fn test_parse_install_subcommand() {
     let cli = Cli::try_parse_from(["apmw", "install", "express"]).unwrap();
     match cli.command {
-      Some(Commands::Install {
-        package,
-        dev,
-        manager,
-      }) => {
+      Some(Commands::Install { package, dev }) => {
         assert_eq!(package, "express");
         assert!(!dev);
-        assert!(manager.is_none());
       }
       _ => panic!("expected Install command"),
     }
@@ -339,7 +415,7 @@ mod tests {
   fn test_parse_install_with_dev_flag() {
     let cli = Cli::try_parse_from(["apmw", "install", "jest", "--dev"]).unwrap();
     match cli.command {
-      Some(Commands::Install { package, dev, .. }) => {
+      Some(Commands::Install { package, dev }) => {
         assert_eq!(package, "jest");
         assert!(dev);
       }
@@ -348,17 +424,9 @@ mod tests {
   }
 
   #[test]
-  fn test_parse_install_with_manager_override() {
+  fn test_parse_install_with_global_manager_override() {
     let cli = Cli::try_parse_from(["apmw", "install", "lodash", "--manager", "pnpm"]).unwrap();
-    match cli.command {
-      Some(Commands::Install {
-        package, manager, ..
-      }) => {
-        assert_eq!(package, "lodash");
-        assert_eq!(manager.as_deref(), Some("pnpm"));
-      }
-      _ => panic!("expected Install command"),
-    }
+    assert_eq!(cli.global.manager.as_deref(), Some("pnpm"));
   }
 
   #[test]
@@ -715,5 +783,127 @@ mod tests {
     assert_eq!(Shell::Bash.to_string(), "bash");
     assert_eq!(Shell::Zsh.to_string(), "zsh");
     assert_eq!(Shell::Fish.to_string(), "fish");
+  }
+
+  // --- Manager override tests (story 02-004) ---
+
+  #[test]
+  fn test_validate_manager_name_valid_pnpm() {
+    assert_eq!(validate_manager_name("pnpm").unwrap(), "pnpm");
+  }
+
+  #[test]
+  fn test_validate_manager_name_valid_uv() {
+    assert_eq!(validate_manager_name("uv").unwrap(), "uv");
+  }
+
+  #[test]
+  fn test_validate_manager_name_valid_cargo() {
+    assert_eq!(validate_manager_name("cargo").unwrap(), "cargo");
+  }
+
+  #[test]
+  fn test_validate_manager_name_valid_docker() {
+    assert_eq!(validate_manager_name("docker").unwrap(), "docker");
+  }
+
+  #[test]
+  fn test_validate_manager_name_valid_all() {
+    for &name in VALID_MANAGERS {
+      assert!(
+        validate_manager_name(name).is_ok(),
+        "'{name}' should be a valid manager name"
+      );
+    }
+  }
+
+  #[test]
+  fn test_validate_manager_name_invalid() {
+    let result = validate_manager_name("nonexistent");
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    assert!(err.contains("invalid manager 'nonexistent'"));
+    assert!(err.contains("pnpm"));
+    assert!(err.contains("cargo"));
+    assert!(err.contains("docker"));
+  }
+
+  #[test]
+  fn test_validate_manager_name_invalid_lists_valid_options() {
+    let result = validate_manager_name("foobar");
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    // The error message should list all valid options.
+    for &name in VALID_MANAGERS {
+      assert!(
+        err.contains(name),
+        "Error message should contain '{name}'"
+      );
+    }
+  }
+
+  #[test]
+  fn test_parse_global_manager_flag() {
+    let cli = Cli::try_parse_from(["apmw", "--manager", "pnpm", "status"]).unwrap();
+    assert_eq!(cli.global.manager.as_deref(), Some("pnpm"));
+  }
+
+  #[test]
+  fn test_parse_global_manager_use_alias() {
+    let cli = Cli::try_parse_from(["apmw", "--use", "uv", "status"]).unwrap();
+    assert_eq!(cli.global.manager.as_deref(), Some("uv"));
+  }
+
+  #[test]
+  fn test_parse_global_manager_on_detect() {
+    let cli = Cli::try_parse_from(["apmw", "--manager", "cargo", "detect"]).unwrap();
+    assert_eq!(cli.global.manager.as_deref(), Some("cargo"));
+    assert_eq!(cli.command, Some(Commands::Detect));
+  }
+
+  #[test]
+  fn test_parse_global_manager_on_install() {
+    let cli =
+      Cli::try_parse_from(["apmw", "install", "express", "--manager", "pnpm"]).unwrap();
+    assert_eq!(cli.global.manager.as_deref(), Some("pnpm"));
+  }
+
+  #[test]
+  fn test_parse_global_manager_use_alias_on_install() {
+    let cli =
+      Cli::try_parse_from(["apmw", "install", "express", "--use", "npm"]).unwrap();
+    assert_eq!(cli.global.manager.as_deref(), Some("npm"));
+  }
+
+  #[test]
+  fn test_parse_global_manager_not_set() {
+    let cli = Cli::try_parse_from(["apmw", "status"]).unwrap();
+    assert!(cli.global.manager.is_none());
+  }
+
+  #[test]
+  fn test_parse_invalid_manager_errors() {
+    let result = Cli::try_parse_from(["apmw", "--manager", "nonexistent", "status"]);
+    assert!(result.is_err());
+    let err = result.unwrap_err().to_string();
+    assert!(err.contains("invalid manager"));
+    assert!(err.contains("pnpm"));
+  }
+
+  #[test]
+  fn test_parse_invalid_manager_use_alias_errors() {
+    let result = Cli::try_parse_from(["apmw", "--use", "badmgr", "status"]);
+    assert!(result.is_err());
+  }
+
+  #[test]
+  fn test_valid_managers_count() {
+    // The story defines 29 valid managers; ensure we have exactly that many.
+    assert_eq!(
+      VALID_MANAGERS.len(),
+      29,
+      "Expected 29 valid managers, got {}",
+      VALID_MANAGERS.len()
+    );
   }
 }

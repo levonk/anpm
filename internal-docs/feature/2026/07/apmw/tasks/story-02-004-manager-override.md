@@ -7,7 +7,7 @@ prd_file: "internal-docs/feature/2026/07/apmw/feat-202607290558-apmw.md"
 phase: 2
 parallel_id: 4
 branch: "feature/current/apmw/story-02-004-manager-override"
-status: "todo"
+status: "done"
 assignee: ""
 reviewer: ""
 dependencies: ["01-002", "02-001"]
@@ -57,19 +57,19 @@ Add a `--manager <name>` (alias `--use <name>`) CLI flag that overrides auto-det
 
 ## Sub-Tasks
 
-- [ ] Add `--manager <name>` (alias `--use <name>`) flag to CLI definition
+- [x] Add `--manager <name>` (alias `--use <name>`) flag to CLI definition
   **Verify**: `cargo check` → exit 0
-- [ ] Define valid manager value set and validation logic
+- [x] Define valid manager value set and validation logic
   **Verify**: `cargo test manager_validation` → tests pass
-- [ ] Wire override into detection flow (skip detection when flag present)
+- [x] Wire override into detection flow (skip detection when flag present)
   **Verify**: `cargo test manager_override` → tests pass
-- [ ] Record override in audit log
+- [x] Record override in audit log
   **Verify**: `cargo test manager_override_audit` → tests pass
-- [ ] Add unit tests for valid overrides (pnpm, uv, cargo, docker, etc.)
+- [x] Add unit tests for valid overrides (pnpm, uv, cargo, docker, etc.)
   **Verify**: `just test` → all pass
-- [ ] Add unit test for invalid manager name (error lists valid options)
+- [x] Add unit test for invalid manager name (error lists valid options)
   **Verify**: `cargo test invalid_manager` → tests pass
-- [ ] Run `just validate`
+- [x] Run `just validate`
   **Verify**: `just validate` → all gates pass
 
 ## Relevant Files
@@ -80,13 +80,13 @@ Add a `--manager <name>` (alias `--use <name>`) CLI flag that overrides auto-det
 
 ## Acceptance Criteria
 
-- [ ] `--manager pnpm` forces pnpm as the package manager (detection skipped)
-- [ ] `--manager uv` forces uv as the package manager (detection skipped)
-- [ ] `--use <name>` alias works identically to `--manager <name>`
-- [ ] Invalid manager name errors with a message listing all valid options
-- [ ] Override appears in the audit log with source `cli-override`
-- [ ] All unit tests pass
-- [ ] `just validate` passes
+- [x] `--manager pnpm` forces pnpm as the package manager (detection skipped)
+- [x] `--manager uv` forces uv as the package manager (detection skipped)
+- [x] `--use <name>` alias works identically to `--manager <name>`
+- [x] Invalid manager name errors with a message listing all valid options
+- [x] Override appears in the audit log with source `cli-override`
+- [x] All unit tests pass
+- [x] `just validate` passes
 
 ## Test Plan
 
@@ -113,9 +113,9 @@ Add a `--manager <name>` (alias `--use <name>`) CLI flag that overrides auto-det
 
 ## Definition of Done
 
-- [ ] All verification commands pass
-- [ ] Code, tests, docs updated; CI green; story file updated
-- [ ] No files outside in-scope list are modified
+- [x] All verification commands pass
+- [x] Code, tests, docs updated; CI green; story file updated
+- [x] No files outside in-scope list are modified
 
 ## STOP Conditions
 

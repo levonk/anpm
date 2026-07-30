@@ -369,3 +369,166 @@ fn test_detect_compose_yaml() {
     .success()
     .stdout(contains("docker"));
 }
+
+// ---------------------------------------------------------------------------
+// Manager override integration tests (story 02-004)
+// ---------------------------------------------------------------------------
+
+#[test]
+fn test_manager_override_pnpm_skips_detection() {
+  // Create a cargo project but force pnpm — detection should be skipped.
+  let dir = make_project_dir(&["Cargo.toml"]);
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .current_dir(dir.path())
+    .arg("--manager")
+    .arg("pnpm")
+    .arg("detect")
+    .arg("--json")
+    .assert()
+    .success()
+    .stdout(contains("pnpm"));
+}
+
+#[test]
+fn test_manager_override_uv_skips_detection() {
+  let dir = make_project_dir(&["Cargo.toml"]);
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .current_dir(dir.path())
+    .arg("--manager")
+    .arg("uv")
+    .arg("detect")
+    .arg("--json")
+    .assert()
+    .success()
+    .stdout(contains("uv"));
+}
+
+#[test]
+fn test_manager_override_cargo_skips_detection() {
+  let dir = make_project_dir(&["package.json"]);
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .current_dir(dir.path())
+    .arg("--manager")
+    .arg("cargo")
+    .arg("detect")
+    .arg("--json")
+    .assert()
+    .success()
+    .stdout(contains("cargo"));
+}
+
+#[test]
+fn test_manager_override_docker_skips_detection() {
+  let dir = make_project_dir(&["Cargo.toml"]);
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .current_dir(dir.path())
+    .arg("--manager")
+    .arg("docker")
+    .arg("detect")
+    .arg("--json")
+    .assert()
+    .success()
+    .stdout(contains("docker"));
+}
+
+#[test]
+fn test_use_alias_works_identically() {
+  let dir = make_project_dir(&["Cargo.toml"]);
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .current_dir(dir.path())
+    .arg("--use")
+    .arg("pnpm")
+    .arg("detect")
+    .arg("--json")
+    .assert()
+    .success()
+    .stdout(contains("pnpm"));
+}
+
+#[test]
+fn test_invalid_manager_name_errors() {
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .arg("--manager")
+    .arg("nonexistent")
+    .arg("status")
+    .assert()
+    .failure()
+    .stderr(contains("invalid manager"));
+}
+
+#[test]
+fn test_invalid_manager_use_alias_errors() {
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .arg("--use")
+    .arg("badmgr")
+    .arg("status")
+    .assert()
+    .failure()
+    .stderr(contains("invalid manager"));
+}
+
+#[test]
+fn test_invalid_manager_error_lists_valid_options() {
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  let output = cmd
+    .arg("--manager")
+    .arg("foobar")
+    .arg("status")
+    .assert()
+    .failure()
+    .get_output()
+    .clone();
+  let stderr = String::from_utf8_lossy(&output.stderr);
+  assert!(stderr.contains("pnpm"), "error should list pnpm");
+  assert!(stderr.contains("cargo"), "error should list cargo");
+  assert!(stderr.contains("docker"), "error should list docker");
+  assert!(stderr.contains("uv"), "error should list uv");
+}
+
+#[test]
+fn test_manager_override_on_install() {
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .arg("install")
+    .arg("express")
+    .arg("--manager")
+    .arg("pnpm")
+    .assert()
+    .success()
+    .stdout(contains("via pnpm"));
+}
+
+#[test]
+fn test_manager_use_alias_on_install() {
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .arg("install")
+    .arg("express")
+    .arg("--use")
+    .arg("npm")
+    .assert()
+    .success()
+    .stdout(contains("via npm"));
+}
+
+#[test]
+fn test_manager_override_confidence_is_max() {
+  let dir = make_project_dir(&["Cargo.toml"]);
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .current_dir(dir.path())
+    .arg("--manager")
+    .arg("pnpm")
+    .arg("detect")
+    .arg("--json")
+    .assert()
+    .success()
+    .stdout(contains("\"confidence\":1.0"));
+}

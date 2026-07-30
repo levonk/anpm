@@ -10,9 +10,10 @@ use apmw::audit::{detect_caller_program, detect_terminal_type, AuditLogEntry, Au
 use apmw::cli::{Cli, Commands, Shell};
 use apmw::config;
 use apmw::daemon::{DaemonManager, JobId};
-use apmw::detect::DetectionEngine;
+use apmw::detect::{DetectionEngine, DetectionResult};
 use apmw::error::ApmwError;
 use apmw::output::OutputDispatcher;
+use apmw::path_scan::PathScanner;
 
 fn main() -> anyhow::Result<()> {
   let cli = Cli::parse();
@@ -112,23 +113,32 @@ async fn async_main(cli: Cli) -> anyhow::Result<()> {
 
 /// Dispatch subcommands (non-daemon-related logic).
 async fn dispatch_subcommand(cli: Cli) -> anyhow::Result<()> {
+  // If a global --manager override is set, record it in the audit log and
+  // validate the binary exists on PATH (warning if not found).
+  if let Some(ref manager) = cli.global.manager {
+    record_manager_override(manager);
+    check_manager_binary(manager);
+  }
+
   match cli.command {
-    Some(Commands::Install {
-      package,
-      dev,
-      manager,
-    }) => {
+    Some(Commands::Install { package, dev }) => {
       let dev_tag = if dev { " (dev)" } else { "" };
-      match &manager {
+      match &cli.global.manager {
         Some(m) => println!("Installing {package}{dev_tag} via {m}..."),
         None => println!("Installing {package}{dev_tag}..."),
       }
     }
     Some(Commands::Detect) => {
-      let engine = DetectionEngine::new();
       let dir = std::env::current_dir()?;
 
-      let results = engine.detect(&dir)?;
+      // When --manager is set, skip auto-detection and use the forced manager.
+      let results = if let Some(ref manager) = cli.global.manager {
+        tracing::info!(manager = manager, "Detection skipped due to --manager override");
+        vec![DetectionResult::from_forced_manager(manager)]
+      } else {
+        let engine = DetectionEngine::new();
+        engine.detect(&dir)?
+      };
 
       // Write audit log entry.
       let detected_names: Vec<String> = results
@@ -298,4 +308,58 @@ fn run_uninstall() -> anyhow::Result<()> {
     "Completion scripts: remove _apmw / apmw.bash / apmw.fish from your shell completion dirs."
   );
   Ok(())
+}
+
+/// Record a `--manager` override in the audit log with source `cli-override`.
+///
+/// The entry uses the `request` field to identify this as a manager override
+/// and the `action` field to record the manager name and source.
+fn record_manager_override(manager: &str) {
+  tracing::info!(manager = manager, "Manager override active (source: cli-override)");
+
+  let terminal_type = detect_terminal_type();
+  let caller_program = detect_caller_program();
+  let entry = AuditLogEntry::now(
+    "manager-override",
+    format!("forced manager: {manager} (source: cli-override)"),
+    terminal_type,
+    caller_program,
+    vec![manager.to_string()],
+  );
+  if let Ok(writer) = AuditLogWriter::new() {
+    let _ = writer.append(&entry);
+  }
+}
+
+/// Check that the forced manager binary exists on PATH.
+///
+/// Emits a warning if the binary is not found. This is a warning rather than
+/// a hard error because the manager may be available via a wrapper (e.g.
+/// devbox, mise) or may be installed in a non-standard location.
+fn check_manager_binary(manager: &str) {
+  let scanner = PathScanner::new();
+  let result = scanner.scan(manager);
+  match result {
+    apmw::path_scan::ScanResult::Found { path, .. } => {
+      tracing::info!(
+        manager = manager,
+        path = %path.display(),
+        "Forced manager binary found on PATH"
+      );
+    }
+    apmw::path_scan::ScanResult::Wrapper { command } => {
+      tracing::info!(
+        manager = manager,
+        wrapper = command,
+        "Forced manager available via wrapper"
+      );
+    }
+    apmw::path_scan::ScanResult::NotFound => {
+      tracing::warn!(
+        manager = manager,
+        "Forced manager binary not found on PATH — it may be available via a wrapper \
+         or may need to be installed before use"
+      );
+    }
+  }
 }
