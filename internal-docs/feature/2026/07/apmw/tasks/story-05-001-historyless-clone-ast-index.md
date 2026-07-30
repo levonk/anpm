@@ -29,7 +29,7 @@ Create the historyless clone engine that clones any package with `--depth 1 --si
 
 - **Relevant files and their roles:**
   - PRD FR-6 (sections FR-6.1 through FR-6.4) — Historyless clone requirements
-  - indexed-ast-tools.md at `/Users/micro/p/gh/levonk/skills-src/src/current/knowledge/software-architecture-essentials/indexed-ast-tools.md` — AST tool decision tree
+  - indexed-ast-tools.md at `~/p/gh/levonk/skills-src/src/current/knowledge/software-architecture-essentials/indexed-ast-tools.md` — AST tool decision tree
   - `src/daemon/` — Daemon and job manager (from story 01-004) for background clone/index jobs
 - **Existing code excerpts (from indexed-ast-tools.md):**
   ```

@@ -31,7 +31,7 @@ Create the package manager detection engine that scans the current project direc
   - `src/main.rs` (lines 61-63) — `Detect` command stub: `println!("Detecting package manager...");`
   - `src/error.rs` — Has `PackageManagerNotFound` error variant
   - PRD FR-1 (sections FR-1.1 through FR-1.4) — Detection requirements
-  - 2ndbrain research Table 1 at `/Users/micro/Documents/2ndbrain/2ndbrain/Work/01 OandO/Self Improvement/Want To Build/Digital/All Package Manager Wrapper/All Package Manager Wrapper Tool Landscape.md`
+  - 2ndbrain research Table 1 at `~/Documents/2ndbrain/2ndbrain/Work/01 OandO/Self Improvement/Want To Build/Digital/All Package Manager Wrapper/All Package Manager Wrapper Tool Landscape.md`
 - **Repository conventions:** Module by feature/domain. Use pub use in lib.rs. thiserror for errors.
 - **Build/test/lint commands:**
   | Purpose   | Command                  | Expected Result |

@@ -31,7 +31,7 @@ Create the ecosystem mapping engine that maps non-canonical package managers to 
 
 - **Relevant files and their roles:**
   - PRD FR-2 (sections FR-2.1 through FR-2.3) — Ecosystem mapping requirements
-  - 2ndbrain research Table 2 at `/Users/micro/Documents/2ndbrain/2ndbrain/Work/01 OandO/Self Improvement/Want To Build/Digital/All Package Manager Wrapper/All Package Manager Wrapper Tool Landscape.md`
+  - 2ndbrain research Table 2 at `~/Documents/2ndbrain/2ndbrain/Work/01 OandO/Self Improvement/Want To Build/Digital/All Package Manager Wrapper/All Package Manager Wrapper Tool Landscape.md`
 - **Repository conventions:** Module by feature/domain. Use serde for data structures.
 - **Build/test/lint commands:**
   | Purpose   | Command                  | Expected Result |

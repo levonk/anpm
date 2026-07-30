@@ -29,8 +29,8 @@ Create the security scanning orchestrator implementing the two-phase scan-all-th
 
 - **Relevant files and their roles:**
   - PRD FR-5 (sections FR-5.1 through FR-5.7) — Security scanning requirements
-  - `executable_skill-install.sh` at `/Users/micro/p/gh/levonk/dotfiles/home/current/dot_local/bin/executable_skill-install.sh` — Two-phase scan pattern reference
-  - `npmrc.tmpl` at `/Users/micro/p/gh/levonk/dotfiles/home/current/.chezmoitemplates/config/npm/npmrc.tmpl` — Security posture reference
+  - `executable_skill-install.sh` at `~/p/gh/levonk/dotfiles/home/current/dot_local/bin/executable_skill-install.sh` — Two-phase scan pattern reference
+  - `npmrc.tmpl` at `~/p/gh/levonk/dotfiles/home/current/.chezmoitemplates/config/npm/npmrc.tmpl` — Security posture reference
   - `src/error.rs` — Has `SecurityScanFailed` error variant
 - **Existing code excerpts (from skill-install.sh):**
   ```bash
