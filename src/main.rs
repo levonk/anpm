@@ -7,11 +7,12 @@ use clap::{CommandFactory, Parser};
 use clap_complete::{generate, Shell as CompleteShell};
 
 use apmw::audit::{detect_caller_program, detect_terminal_type, AuditLogEntry, AuditLogWriter};
-use apmw::cli::{Cli, Commands, Shell};
+use apmw::cli::{Cli, Commands, GovernanceSubcommand, Shell};
 use apmw::config;
 use apmw::daemon::{DaemonManager, JobId};
 use apmw::detect::{DetectionEngine, DetectionResult};
 use apmw::error::ApmwError;
+use apmw::governance::{ReqwestSpecClient, SpecLoader};
 use apmw::output::OutputDispatcher;
 use apmw::path_scan::PathScanner;
 
@@ -237,6 +238,34 @@ async fn dispatch_subcommand(cli: Cli) -> anyhow::Result<()> {
         println!("Run 'apmw config --show' to view config or 'apmw config --init' to create it.");
       }
     }
+    Some(Commands::Governance { subcommand }) => match subcommand {
+      GovernanceSubcommand::Refresh => {
+        let loader = SpecLoader::new();
+        let client = ReqwestSpecClient::new();
+        match loader.refresh(&client) {
+          Ok(spec) => {
+            println!("Governance spec refreshed (version: {}).", spec.version);
+            if spec.rules.is_empty() {
+              println!("No governance rules found in spec.");
+            } else {
+              println!("Loaded {} governance rule(s):", spec.rules.len());
+              for rule in &spec.rules {
+                println!("  {} {} — {}", rule.governance_type, rule.tool, {
+                  rule
+                    .message
+                    .clone()
+                    .unwrap_or_else(|| "(no message)".to_string())
+                });
+              }
+            }
+          }
+          Err(e) => {
+            eprintln!("Failed to refresh governance spec: {e}");
+            return Err(anyhow::anyhow!(e));
+          }
+        }
+      }
+    },
     None => {
       println!("apmw v{} — run 'apmw --help' for usage", apmw::version());
     }

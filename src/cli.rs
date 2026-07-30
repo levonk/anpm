@@ -354,6 +354,19 @@ pub enum Commands {
     #[arg(long)]
     show: bool,
   },
+
+  /// Manage governance rules (refresh the spec, show current rules).
+  Governance {
+    #[command(subcommand)]
+    subcommand: GovernanceSubcommand,
+  },
+}
+
+/// Subcommands for `apmw governance`.
+#[derive(Subcommand, Debug, Clone, PartialEq, Eq)]
+pub enum GovernanceSubcommand {
+  /// Force-refresh the cached governance spec from levonk-packages.
+  Refresh,
 }
 
 #[cfg(test)]
