@@ -48,7 +48,7 @@
 | Story ID | Title | Phase | Status | Assignee | Parallel-safe | Dependencies | Dependants | Modules | Branch |
 |---|---|---:|---|---|---|---|---|---|---|
 | 03-001 | Version resolution engine (pinned/engine/latest/latest-minor + min-age-days supply-chain defense) | 03 | [x] Done |  | true | 01-001, 01-005, 02-001 | 04-001 | src/version/ | feature/current/apmw/story-03-001-version-resolution |
-| 03-002 | Security scanning orchestrator (two-phase) | 03 | [ ] Todo |  | true | 01-001 | 04-001, 06-002 | src/security/ | feature/current/apmw/story-03-002-security-scanning |
+| 03-002 | Security scanning orchestrator (two-phase) | 03 | [x] Done |  | true | 01-001 | 04-001, 06-002 | src/security/ | feature/current/apmw/story-03-002-security-scanning |
 | 03-003 | Initial scanner plugins (cargo audit, npm audit, pip-audit, osv-scanner, trivy/grype for containers) | 03 | [ ] Todo |  | true | 03-002 | 04-001, 04-004 | src/security/plugins/ | feature/current/apmw/story-03-003-scanner-plugins |
 
 ### Phase 04 — Add Engine + Dev Deps + Governance + Containers + Telemetry + Suggestions
