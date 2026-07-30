@@ -7,6 +7,7 @@
 pub mod audit;
 pub mod cli;
 pub mod config;
+pub mod containers;
 pub mod daemon;
 pub mod detect;
 pub mod ecosystem;
@@ -19,6 +20,12 @@ pub mod version;
 pub use audit::{AuditLogEntry, AuditLogWriter, TerminalType};
 pub use cli::{Cli, Commands};
 pub use config::ApmwConfig;
+pub use containers::{
+  detect_container_usage, list_images, pull_image, scan_image, CommandOutput,
+  ContainerDetectionResult, ContainerEngine, ContainerExecutor, ContainerRuntime,
+  ContainerScanResult, ContainerUsage, ContainerUsageKind, DockerComposeInfo, GovernanceRule,
+  LocalImage, PullResult, TokioExecutor,
+};
 pub use daemon::{DaemonManager, DaemonStatus, JobId, JobManager, JobStatus};
 pub use detect::{DetectionEngine, DetectionResult};
 pub use ecosystem::{ApmwCommand, EcosystemMap, EcosystemMapper};
