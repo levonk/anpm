@@ -14,42 +14,15 @@ use tracing::warn;
 /// New package managers can be added by extending this list.
 pub const VALID_MANAGERS: &[&str] = &[
   // Node.js ecosystem
-  "pnpm",
-  "npm",
-  "yarn",
-  "bun",
-  // Python ecosystem
-  "uv",
-  "pip",
-  "poetry",
-  "pipenv",
-  "pdm",
-  "conda",
-  // Rust ecosystem
-  "cargo",
-  // Go ecosystem
-  "go",
-  // Ruby ecosystem
-  "gem",
-  // OS-level / OS-wrapper ecosystem
-  "brew",
-  "nix",
-  "devbox",
-  "apt",
-  "dnf",
-  "pacman",
-  "winget",
-  "snap",
-  "flatpak",
+  "pnpm", "npm", "yarn", "bun", // Python ecosystem
+  "uv", "pip", "poetry", "pipenv", "pdm", "conda", // Rust ecosystem
+  "cargo", // Go ecosystem
+  "go",    // Ruby ecosystem
+  "gem",   // OS-level / OS-wrapper ecosystem
+  "brew", "nix", "devbox", "apt", "dnf", "pacman", "winget", "snap", "flatpak",
   // Container / virtualization ecosystem
-  "helm",
-  "docker",
-  "podman",
-  // JVM ecosystem
-  "maven",
-  "gradle",
-  "sbt",
-  // .NET ecosystem
+  "helm", "docker", "podman", // JVM ecosystem
+  "maven", "gradle", "sbt", // .NET ecosystem
   "dotnet",
 ];
 
@@ -62,9 +35,7 @@ pub fn validate_manager_name(name: &str) -> Result<String, String> {
     Ok(name.to_string())
   } else {
     let valid = VALID_MANAGERS.join(", ");
-    Err(format!(
-      "invalid manager '{name}'. Valid options: {valid}"
-    ))
+    Err(format!("invalid manager '{name}'. Valid options: {valid}"))
   }
 }
 
@@ -835,10 +806,7 @@ mod tests {
     let err = result.unwrap_err();
     // The error message should list all valid options.
     for &name in VALID_MANAGERS {
-      assert!(
-        err.contains(name),
-        "Error message should contain '{name}'"
-      );
+      assert!(err.contains(name), "Error message should contain '{name}'");
     }
   }
 
@@ -863,15 +831,13 @@ mod tests {
 
   #[test]
   fn test_parse_global_manager_on_install() {
-    let cli =
-      Cli::try_parse_from(["apmw", "install", "express", "--manager", "pnpm"]).unwrap();
+    let cli = Cli::try_parse_from(["apmw", "install", "express", "--manager", "pnpm"]).unwrap();
     assert_eq!(cli.global.manager.as_deref(), Some("pnpm"));
   }
 
   #[test]
   fn test_parse_global_manager_use_alias_on_install() {
-    let cli =
-      Cli::try_parse_from(["apmw", "install", "express", "--use", "npm"]).unwrap();
+    let cli = Cli::try_parse_from(["apmw", "install", "express", "--use", "npm"]).unwrap();
     assert_eq!(cli.global.manager.as_deref(), Some("npm"));
   }
 

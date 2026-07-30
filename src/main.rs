@@ -133,7 +133,10 @@ async fn dispatch_subcommand(cli: Cli) -> anyhow::Result<()> {
 
       // When --manager is set, skip auto-detection and use the forced manager.
       let results = if let Some(ref manager) = cli.global.manager {
-        tracing::info!(manager = manager, "Detection skipped due to --manager override");
+        tracing::info!(
+          manager = manager,
+          "Detection skipped due to --manager override"
+        );
         vec![DetectionResult::from_forced_manager(manager)]
       } else {
         let engine = DetectionEngine::new();
@@ -141,10 +144,7 @@ async fn dispatch_subcommand(cli: Cli) -> anyhow::Result<()> {
       };
 
       // Write audit log entry.
-      let detected_names: Vec<String> = results
-        .iter()
-        .map(|r| r.manager.clone())
-        .collect();
+      let detected_names: Vec<String> = results.iter().map(|r| r.manager.clone()).collect();
       let action = if detected_names.is_empty() {
         "no package manager detected".to_string()
       } else {
@@ -154,13 +154,7 @@ async fn dispatch_subcommand(cli: Cli) -> anyhow::Result<()> {
       let terminal_type = detect_terminal_type();
       let caller_program = detect_caller_program();
       let tools_used = detected_names.clone();
-      let entry = AuditLogEntry::now(
-        request,
-        action,
-        terminal_type,
-        caller_program,
-        tools_used,
-      );
+      let entry = AuditLogEntry::now(request, action, terminal_type, caller_program, tools_used);
       if let Ok(writer) = AuditLogWriter::new() {
         let _ = writer.append(&entry);
       }
@@ -315,7 +309,10 @@ fn run_uninstall() -> anyhow::Result<()> {
 /// The entry uses the `request` field to identify this as a manager override
 /// and the `action` field to record the manager name and source.
 fn record_manager_override(manager: &str) {
-  tracing::info!(manager = manager, "Manager override active (source: cli-override)");
+  tracing::info!(
+    manager = manager,
+    "Manager override active (source: cli-override)"
+  );
 
   let terminal_type = detect_terminal_type();
   let caller_program = detect_caller_program();

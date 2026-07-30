@@ -14,7 +14,6 @@
 //! must NEVER map to `pnpm dlx` (Node). Each ecosystem's commands map within
 //! that ecosystem only (PRD FR-2.1).
 
-
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -150,19 +149,23 @@ pub enum PackageManager {
 impl PackageManager {
   pub fn ecosystem(self) -> Ecosystem {
     match self {
-      PackageManager::Npm |
-      PackageManager::Yarn |
-      PackageManager::Yarn2 |
-      PackageManager::Pnpm |
-      PackageManager::Bun => Ecosystem::Node,
-      PackageManager::Pip | PackageManager::Poetry | PackageManager::Pipenv |
-      PackageManager::Pdm | PackageManager::Conda | PackageManager::Uv => Ecosystem::Python,
+      PackageManager::Npm
+      | PackageManager::Yarn
+      | PackageManager::Yarn2
+      | PackageManager::Pnpm
+      | PackageManager::Bun => Ecosystem::Node,
+      PackageManager::Pip
+      | PackageManager::Poetry
+      | PackageManager::Pipenv
+      | PackageManager::Pdm
+      | PackageManager::Conda
+      | PackageManager::Uv => Ecosystem::Python,
       PackageManager::Cargo => Ecosystem::Rust,
       PackageManager::Go => Ecosystem::Go,
       PackageManager::Maven | PackageManager::Gradle | PackageManager::Sbt => Ecosystem::Jvm,
-      PackageManager::SwiftPm |
-      PackageManager::CocoaPods |
-      PackageManager::Carthage => Ecosystem::Swift,
+      PackageManager::SwiftPm | PackageManager::CocoaPods | PackageManager::Carthage => {
+        Ecosystem::Swift
+      }
       PackageManager::Dotnet => Ecosystem::Dotnet,
       PackageManager::Flutter | PackageManager::Dart => Ecosystem::Flutter,
       PackageManager::Bazel | PackageManager::Ant => Ecosystem::Polyglot,
@@ -202,7 +205,7 @@ impl PackageManager {
     }
   }
 
-  pub fn from_str(s: &str) -> Option<Self> {
+  pub fn parse_manager(s: &str) -> Option<Self> {
     match s.to_ascii_lowercase().as_str() {
       "npm" => Some(PackageManager::Npm),
       "yarn" => Some(PackageManager::Yarn),
@@ -326,9 +329,9 @@ pub fn manager_command(manager: PackageManager, cmd: ApmwCommand) -> Option<&'st
     (PackageManager::Pip, ApmwCommand::List) => Some("pip list"),
     (PackageManager::Pip, ApmwCommand::Outdated) => Some("pip list --outdated"),
     (PackageManager::Pip, ApmwCommand::Remove) => Some("pip uninstall <pkg>"),
-    (PackageManager::Pip, ApmwCommand::UpdateAll) => Some(
-      "pip install --upgrade -r requirements.txt",
-    ),
+    (PackageManager::Pip, ApmwCommand::UpdateAll) => {
+      Some("pip install --upgrade -r requirements.txt")
+    }
     (PackageManager::Pip, ApmwCommand::Update) => Some("pip install --upgrade <pkg>"),
     (PackageManager::Pip, ApmwCommand::Test) => Some("python -m pytest"),
     (PackageManager::Pip, ApmwCommand::Build) => Some("python -m build"),
@@ -353,9 +356,9 @@ pub fn manager_command(manager: PackageManager, cmd: ApmwCommand) -> Option<&'st
     (PackageManager::Pipenv, ApmwCommand::UpdateAll) => Some("pipenv update"),
     (PackageManager::Pipenv, ApmwCommand::Update) => Some("pipenv update <pkg>"),
     (PackageManager::Pipenv, ApmwCommand::Test) => Some("pipenv run pytest"),
-    (PackageManager::Pipenv, ApmwCommand::Build) => Some(
-      "pipenv run python setup.py sdist bdist_wheel",
-    ),
+    (PackageManager::Pipenv, ApmwCommand::Build) => {
+      Some("pipenv run python setup.py sdist bdist_wheel")
+    }
     (PackageManager::Pipenv, ApmwCommand::Init) => Some("pipenv install"),
     (PackageManager::Pdm, ApmwCommand::Add) => Some("pdm add <pkg>"),
     (PackageManager::Pdm, ApmwCommand::AddDev) => Some("pdm add -d <pkg>"),
@@ -416,9 +419,9 @@ pub fn manager_command(manager: PackageManager, cmd: ApmwCommand) -> Option<&'st
     (PackageManager::Maven, ApmwCommand::AddDev) => None,
     (PackageManager::Maven, ApmwCommand::Install) => Some("mvn install"),
     (PackageManager::Maven, ApmwCommand::List) => Some("mvn dependency:list"),
-    (PackageManager::Maven, ApmwCommand::Outdated) => Some(
-      "mvn versions:display-dependency-updates",
-    ),
+    (PackageManager::Maven, ApmwCommand::Outdated) => {
+      Some("mvn versions:display-dependency-updates")
+    }
     (PackageManager::Maven, ApmwCommand::Remove) => None,
     (PackageManager::Maven, ApmwCommand::UpdateAll) => Some("mvn versions:update-properties"),
     (PackageManager::Maven, ApmwCommand::Update) => None,
@@ -605,8 +608,7 @@ mod tests {
       PackageManager::Yarn2,
       PackageManager::Bun,
       PackageManager::Pnpm,
-    ]
-    {
+    ] {
       assert_eq!(m.ecosystem(), Ecosystem::Node);
       assert_ne!(m.ecosystem(), Ecosystem::Python);
     }
@@ -661,20 +663,26 @@ mod tests {
   fn test_from_str_roundtrip() {
     for m in all_managers() {
       let s = m.as_str();
-      let parsed = PackageManager::from_str(s).unwrap();
+      let parsed = PackageManager::parse_manager(s).unwrap();
       assert_eq!(parsed, m);
     }
   }
 
   #[test]
   fn test_from_str_case_insensitive() {
-    assert_eq!(PackageManager::from_str("NPM"), Some(PackageManager::Npm));
-    assert_eq!(PackageManager::from_str("UV"), Some(PackageManager::Uv));
+    assert_eq!(
+      PackageManager::parse_manager("NPM"),
+      Some(PackageManager::Npm)
+    );
+    assert_eq!(
+      PackageManager::parse_manager("UV"),
+      Some(PackageManager::Uv)
+    );
   }
 
   #[test]
   fn test_from_str_unknown() {
-    assert_eq!(PackageManager::from_str("unknown-pm"), None);
-    assert_eq!(PackageManager::from_str(""), None);
+    assert_eq!(PackageManager::parse_manager("unknown-pm"), None);
+    assert_eq!(PackageManager::parse_manager(""), None);
   }
 }

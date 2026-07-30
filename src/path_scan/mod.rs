@@ -114,10 +114,17 @@ impl ScanResult {
   pub fn to_json(&self, tool: &str) -> String {
     match self {
       ScanResult::Found { path, .. } => {
-        format!(r#"{{"status":"found","path":"{}","tool":"{}"}}"#, path.display(), tool)
+        format!(
+          r#"{{"status":"found","path":"{}","tool":"{}"}}"#,
+          path.display(),
+          tool
+        )
       }
       ScanResult::Wrapper { command } => {
-        format!(r#"{{"status":"wrapper","wrapper":"{} {}","tool":"{}"}}"#, command, tool, tool)
+        format!(
+          r#"{{"status":"wrapper","wrapper":"{} {}","tool":"{}"}}"#,
+          command, tool, tool
+        )
       }
       ScanResult::NotFound => format!(
         r#"{{"status":"not_found","tool":"{tool}","checked":["PATH","devbox","mise","flox","direnv","nix","standard_locations","package_managers"]}}"#
@@ -127,7 +134,7 @@ impl ScanResult {
 }
 
 /// Configuration for the PATH scanner.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct ScanConfig {
   /// Override the `PATH` environment variable (for testing). If `None`, uses
   /// `std::env::var("PATH")`.
@@ -143,18 +150,6 @@ pub struct ScanConfig {
   /// When `true`, skip wrapper detection (used when already inside a devbox
   /// shell — mise/flox/direnv/nix are skipped entirely).
   pub skip_wrappers: bool,
-}
-
-impl Default for ScanConfig {
-  fn default() -> Self {
-    Self {
-      path_env: None,
-      home_dir: None,
-      repo_root: None,
-      env_overrides: HashMap::new(),
-      skip_wrappers: false,
-    }
-  }
 }
 
 impl ScanConfig {
@@ -210,7 +205,9 @@ impl Default for PathScanner {
 impl PathScanner {
   /// Creates a new scanner with default configuration.
   pub fn new() -> Self {
-    Self { config: ScanConfig::default() }
+    Self {
+      config: ScanConfig::default(),
+    }
   }
 
   /// Creates a new scanner with the given configuration.
@@ -243,7 +240,10 @@ impl PathScanner {
       // Inside devbox shell: devbox-managed binaries are on PATH.
       // a. Check PATH
       if let Some(path) = self.find_on_path(tool) {
-        return ScanResult::Found { path, source: ScanSource::Path };
+        return ScanResult::Found {
+          path,
+          source: ScanSource::Path,
+        };
       }
       // b. Path-exhaustion (standard locations + package managers)
       if let Some((path, source)) = self.find_in_standard_dirs(tool) {
@@ -251,7 +251,10 @@ impl PathScanner {
       }
       // c. Skip other wrappers (we're in devbox), go to repo-root fallback
       if let Some(path) = self.find_in_repo_root_fallback(tool) {
-        return ScanResult::Found { path, source: ScanSource::RepoRootFallback };
+        return ScanResult::Found {
+          path,
+          source: ScanSource::RepoRootFallback,
+        };
       }
       // d. Not found
       return ScanResult::NotFound;
@@ -266,7 +269,9 @@ impl PathScanner {
         // (that would be slow and could hang), we check the devbox profile
         // bin directory directly.
         if self.tool_in_devbox_env(&devbox_dir, tool) {
-          return ScanResult::Wrapper { command: "devbox run --".to_string() };
+          return ScanResult::Wrapper {
+            command: "devbox run --".to_string(),
+          };
         }
         // 2b. Fall through to normal flow (don't return Wrapper for a tool
         // that isn't available inside devbox).
@@ -276,7 +281,10 @@ impl PathScanner {
     // 3. Normal flow (no devbox involved)
     // a. Already on PATH?
     if let Some(path) = self.find_on_path(tool) {
-      return ScanResult::Found { path, source: ScanSource::Path };
+      return ScanResult::Found {
+        path,
+        source: ScanSource::Path,
+      };
     }
 
     // b. Other environment wrappers (mise, flox, direnv, nix)
@@ -293,7 +301,10 @@ impl PathScanner {
 
     // d. Repo-root fallback dirs — LAST (least secure)
     if let Some(path) = self.find_in_repo_root_fallback(tool) {
-      return ScanResult::Found { path, source: ScanSource::RepoRootFallback };
+      return ScanResult::Found {
+        path,
+        source: ScanSource::RepoRootFallback,
+      };
     }
 
     // 4. Not found (nix/uv install fallback is handled by the install engine,
@@ -434,9 +445,14 @@ impl PathScanner {
   /// Detects environment wrappers (mise, flox, direnv, nix).
   /// Returns the wrapper command string if a wrapper is detected.
   fn detect_wrapper(&self) -> Option<String> {
-    detect_wrapper(&self.config.env_overrides, &self.config.env("CWD").unwrap_or_else(|| {
-      env::current_dir().map(|p| p.display().to_string()).unwrap_or_default()
-    }))
+    detect_wrapper(
+      &self.config.env_overrides,
+      &self.config.env("CWD").unwrap_or_else(|| {
+        env::current_dir()
+          .map(|p| p.display().to_string())
+          .unwrap_or_default()
+      }),
+    )
   }
 
   /// Checks if devbox is available (on PATH).
@@ -485,7 +501,7 @@ impl PathScanner {
       .config
       .home_dir
       .clone()
-      .or_else(|| dirs::home_dir())
+      .or_else(dirs::home_dir)
       .unwrap_or_else(|| PathBuf::from("."))
   }
 
@@ -505,16 +521,16 @@ fn is_executable(path: &Path) -> bool {
   {
     use std::os::unix::fs::PermissionsExt;
     match std::fs::metadata(path) {
-      Ok(meta) => {
-        meta.is_file() && (meta.permissions().mode() & 0o111 != 0)
-      }
+      Ok(meta) => meta.is_file() && (meta.permissions().mode() & 0o111 != 0),
       Err(_) => false,
     }
   }
   #[cfg(not(unix))]
   {
     // On non-Unix, just check if the file exists.
-    std::fs::metadata(path).map(|m| m.is_file()).unwrap_or(false)
+    std::fs::metadata(path)
+      .map(|m| m.is_file())
+      .unwrap_or(false)
   }
 }
 
@@ -601,7 +617,9 @@ mod tests {
 
   #[test]
   fn test_scan_result_wrapper() {
-    let result = ScanResult::Wrapper { command: "devbox run --".to_string() };
+    let result = ScanResult::Wrapper {
+      command: "devbox run --".to_string(),
+    };
     assert!(result.is_available());
     assert_eq!(result.found_path(), None);
     assert_eq!(result.wrapper_command(), Some("devbox run --"));
@@ -628,7 +646,9 @@ mod tests {
     let deserialized: ScanResult = serde_json::from_str(&json).unwrap();
     assert_eq!(found, deserialized);
 
-    let wrapper = ScanResult::Wrapper { command: "mise exec --".to_string() };
+    let wrapper = ScanResult::Wrapper {
+      command: "mise exec --".to_string(),
+    };
     let json = serde_json::to_string(&wrapper).unwrap();
     let deserialized: ScanResult = serde_json::from_str(&json).unwrap();
     assert_eq!(wrapper, deserialized);
@@ -649,7 +669,9 @@ mod tests {
     assert!(json.contains(r#""status":"found""#));
     assert!(json.contains(r#""path":"/usr/bin/cargo""#));
 
-    let wrapper = ScanResult::Wrapper { command: "devbox run --".to_string() };
+    let wrapper = ScanResult::Wrapper {
+      command: "devbox run --".to_string(),
+    };
     let json = wrapper.to_json("cargo");
     assert!(json.contains(r#""status":"wrapper""#));
 
@@ -744,7 +766,11 @@ mod tests {
     let repo = TempDir::new().unwrap();
     let cwd = TempDir::new().unwrap();
     // Create a Rust project
-    fs::write(repo.path().join("Cargo.toml"), "[package]\nname = \"test\"\n").unwrap();
+    fs::write(
+      repo.path().join("Cargo.toml"),
+      "[package]\nname = \"test\"\n",
+    )
+    .unwrap();
     let target_release = repo.path().join("target/release");
     fs::create_dir_all(&target_release).unwrap();
     make_executable(&target_release.join("myapp"));
@@ -867,7 +893,10 @@ mod tests {
 
   #[test]
   fn test_wrapper_detection_none_active() {
-    let env = HashMap::new();
+    // Use a non-empty HashMap to stay in "test mode" (no real-env fallback),
+    // otherwise IN_NIX_SHELL from the devbox shell would cause Nix to appear active.
+    let mut env = HashMap::new();
+    env.insert("__test_marker".to_string(), "1".to_string());
     assert!(!wrapper_env_active(WrapperKind::Mise, &env));
     assert!(!wrapper_env_active(WrapperKind::Flox, &env));
     assert!(!wrapper_env_active(WrapperKind::Direnv, &env));

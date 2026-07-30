@@ -94,6 +94,12 @@ pub fn is_in_devbox_shell(env_overrides: &HashMap<String, String>) -> bool {
 /// has already been activated and should NOT be detected again).
 pub fn wrapper_env_active(kind: WrapperKind, env_overrides: &HashMap<String, String>) -> bool {
   let var = kind.active_env_var();
+  // When env_overrides is non-empty (test mode), only check overrides — don't
+  // fall back to the real environment, which may have wrapper env vars set
+  // (e.g. IN_NIX_SHELL when running tests inside a devbox/nix shell).
+  if !env_overrides.is_empty() {
+    return env_overrides.get(var).is_some();
+  }
   env_overrides.get(var).is_some() || env::var(var).is_ok()
 }
 
@@ -102,14 +108,16 @@ pub fn wrapper_env_active(kind: WrapperKind, env_overrides: &HashMap<String, Str
 ///
 /// Returns the wrapper command string if a wrapper is detected and its
 /// environment is not already active.
-pub fn detect_wrapper(
-  env_overrides: &HashMap<String, String>,
-  cwd: &str,
-) -> Option<String> {
+pub fn detect_wrapper(env_overrides: &HashMap<String, String>, cwd: &str) -> Option<String> {
   let cwd_path = Path::new(cwd);
 
   // Check each wrapper in order: mise, flox, direnv, nix
-  for kind in [WrapperKind::Mise, WrapperKind::Flox, WrapperKind::Direnv, WrapperKind::Nix] {
+  for kind in [
+    WrapperKind::Mise,
+    WrapperKind::Flox,
+    WrapperKind::Direnv,
+    WrapperKind::Nix,
+  ] {
     // Skip if the wrapper's environment is already active
     if wrapper_env_active(kind, env_overrides) {
       continue;
@@ -191,7 +199,9 @@ fn is_executable(path: &Path) -> bool {
   }
   #[cfg(not(unix))]
   {
-    std::fs::metadata(path).map(|m| m.is_file()).unwrap_or(false)
+    std::fs::metadata(path)
+      .map(|m| m.is_file())
+      .unwrap_or(false)
   }
 }
 
@@ -428,7 +438,10 @@ mod tests {
 
   #[test]
   fn test_wrapper_detection_no_env_active() {
-    let env = HashMap::new();
+    // Use a non-empty HashMap to stay in "test mode" (no real-env fallback),
+    // otherwise IN_NIX_SHELL from the devbox shell would cause Nix to appear active.
+    let mut env = HashMap::new();
+    env.insert("__test_marker".to_string(), "1".to_string());
     assert!(!wrapper_env_active(WrapperKind::Mise, &env));
     assert!(!wrapper_env_active(WrapperKind::Flox, &env));
     assert!(!wrapper_env_active(WrapperKind::Direnv, &env));
@@ -437,7 +450,10 @@ mod tests {
 
   #[test]
   fn test_wrapper_detection_config_files() {
-    assert_eq!(WrapperKind::Mise.config_files(), &[".mise.toml", ".mise/config.toml", "mise.toml"]);
+    assert_eq!(
+      WrapperKind::Mise.config_files(),
+      &[".mise.toml", ".mise/config.toml", "mise.toml"]
+    );
     assert_eq!(WrapperKind::Flox.config_files(), &["flox.nix"]);
     assert_eq!(WrapperKind::Direnv.config_files(), &[".envrc"]);
     assert_eq!(WrapperKind::Nix.config_files(), &["shell.nix", "flake.nix"]);

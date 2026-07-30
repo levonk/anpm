@@ -96,7 +96,11 @@ impl DetectionResult {
       None => {
         // Managers not in the detection registry get default values.
         let ecosystem = ecosystem_for_manager(name);
-        (name.to_string(), ecosystem.to_string(), "language".to_string())
+        (
+          name.to_string(),
+          ecosystem.to_string(),
+          "language".to_string(),
+        )
       }
     };
 
@@ -241,7 +245,10 @@ impl DetectionEngine {
 
         debug!(
           manager = manager.name,
-          score, max_possible, confidence, evidence_count = evidence.len(),
+          score,
+          max_possible,
+          confidence,
+          evidence_count = evidence.len(),
           "Detected package manager"
         );
 
@@ -546,7 +553,12 @@ mod tests {
 
   #[test]
   fn test_results_sorted_by_confidence() {
-    let dir = make_project(&["Cargo.toml", "Cargo.lock", "package.json", "package-lock.json"]);
+    let dir = make_project(&[
+      "Cargo.toml",
+      "Cargo.lock",
+      "package.json",
+      "package-lock.json",
+    ]);
     let engine = DetectionEngine::new();
     let results = engine.detect(dir.path()).expect("detection failed");
     for window in results.windows(2) {
@@ -592,8 +604,7 @@ mod tests {
       }],
     };
     let json = serde_json::to_string(&result).expect("serialize failed");
-    let deserialized: DetectionResult =
-      serde_json::from_str(&json).expect("deserialize failed");
+    let deserialized: DetectionResult = serde_json::from_str(&json).expect("deserialize failed");
     assert_eq!(result, deserialized);
   }
 
@@ -904,9 +915,6 @@ mod tests {
     // The forced result should have confidence 1.0 (max), unlike real detection.
     assert_eq!(result.confidence, 1.0);
     // No file-based evidence — only the CLI override marker.
-    assert!(result
-      .evidence
-      .iter()
-      .all(|e| e.kind == "cli-override"));
+    assert!(result.evidence.iter().all(|e| e.kind == "cli-override"));
   }
 }

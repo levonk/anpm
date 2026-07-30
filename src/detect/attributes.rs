@@ -77,7 +77,7 @@ impl DetectionAttributes {
 pub fn all_attributes() -> Vec<DetectionAttributes> {
   all_managers()
     .iter()
-    .map(|m| DetectionAttributes::from_manager(m))
+    .map(DetectionAttributes::from_manager)
     .collect()
 }
 
@@ -259,10 +259,25 @@ mod tests {
   #[test]
   fn test_python_managers_have_distinct_lockfiles() {
     let index = primary_file_index();
-    assert!(index.get("poetry.lock").map(|v| v.contains(&"poetry")).unwrap_or(false));
-    assert!(index.get("pdm.lock").map(|v| v.contains(&"pdm")).unwrap_or(false));
-    assert!(index.get("uv.lock").map(|v| v.contains(&"uv")).unwrap_or(false));
-    assert!(index.get("Pipfile").map(|v| v.contains(&"pipenv")).unwrap_or(false));
-    assert!(index.get("Pipfile.lock").map(|v| v.contains(&"pipenv")).unwrap_or(false));
+    assert!(index
+      .get("poetry.lock")
+      .map(|v| v.contains(&"poetry"))
+      .unwrap_or(false));
+    assert!(index
+      .get("pdm.lock")
+      .map(|v| v.contains(&"pdm"))
+      .unwrap_or(false));
+    assert!(index
+      .get("uv.lock")
+      .map(|v| v.contains(&"uv"))
+      .unwrap_or(false));
+    assert!(index
+      .get("Pipfile")
+      .map(|v| v.contains(&"pipenv"))
+      .unwrap_or(false));
+    assert!(index
+      .get("Pipfile.lock")
+      .map(|v| v.contains(&"pipenv"))
+      .unwrap_or(false));
   }
 }

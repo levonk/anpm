@@ -42,8 +42,10 @@
 
 pub mod mapping;
 
-pub use mapping::{all_commands, all_ecosystems, all_managers, manager_command, ApmwCommand,
-                  Ecosystem, EcosystemMap, PackageManager};
+pub use mapping::{
+  all_commands, all_ecosystems, all_managers, manager_command, ApmwCommand, Ecosystem,
+  EcosystemMap, PackageManager,
+};
 
 use std::collections::HashMap;
 
@@ -434,14 +436,12 @@ mod tests {
       PackageManager::Pdm,
       PackageManager::Conda,
       PackageManager::Uv,
-    ]
-    {
+    ] {
       assert_eq!(source.ecosystem(), Ecosystem::Python);
       let mapped = mapper.map_command(ApmwCommand::Add, source);
       let expected = manager_command(PackageManager::Uv, ApmwCommand::Add).map(|s| s.to_string());
       assert_eq!(
-        mapped,
-        expected,
+        mapped, expected,
         "Python manager {source} should map to uv's add command"
       );
     }
@@ -457,14 +457,12 @@ mod tests {
       PackageManager::Yarn2,
       PackageManager::Bun,
       PackageManager::Pnpm,
-    ]
-    {
+    ] {
       assert_eq!(source.ecosystem(), Ecosystem::Node);
       let mapped = mapper.map_command(ApmwCommand::Add, source);
       let expected = manager_command(PackageManager::Pnpm, ApmwCommand::Add).map(|s| s.to_string());
       assert_eq!(
-        mapped,
-        expected,
+        mapped, expected,
         "Node manager {source} should map to pnpm's add command"
       );
     }
