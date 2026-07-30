@@ -13,6 +13,7 @@ pub mod ecosystem;
 pub mod error;
 pub mod output;
 pub mod path_scan;
+pub mod security;
 pub mod version;
 
 pub use audit::{AuditLogEntry, AuditLogWriter, TerminalType};
@@ -24,6 +25,11 @@ pub use ecosystem::{ApmwCommand, EcosystemMap, EcosystemMapper};
 pub use error::{ApmwError, Result};
 pub use output::{AgentFormat, OutputDispatcher, OutputMode, Schema, TruncationConfig};
 pub use path_scan::{PathScanner, ScanConfig, ScanResult, ScanSource};
+pub use security::{
+  AggregatedVerdict, InstallAction, OnRiskMode, PackageScanOutcome, PackageScanRequest,
+  ScanConfig as SecurityScanConfig, ScanOrchestrator, ScanReport, ScanResult as SecurityScanResult,
+  Scanner, SecurityFinding, SecurityPosture, Severity, TelemetryPolicy,
+};
 pub use version::{
   MinAgeDaysConfig, RegistryClient, RegistryVersion, ResolutionStrategy, VersionResolution,
   VersionResolver,

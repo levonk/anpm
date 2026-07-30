@@ -222,11 +222,18 @@ impl JobManager {
     jobs.get(id).cloned()
   }
 
-  /// List all known jobs (newest first by created_at).
+  /// List all known jobs (newest first by created_at, then by id).
   pub async fn list_jobs(&self) -> Vec<JobInfo> {
     let jobs = self.jobs.lock().await;
     let mut all: Vec<JobInfo> = jobs.values().cloned().collect();
-    all.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+    // Sort newest first by created_at; break ties by id (which embeds a
+    // monotonic counter) so same-second jobs are ordered deterministically
+    // regardless of HashMap iteration order.
+    all.sort_by(|a, b| {
+      b.created_at
+        .cmp(&a.created_at)
+        .then_with(|| b.id.as_str().cmp(a.id.as_str()))
+    });
     all
   }
 
