@@ -21,6 +21,7 @@ use tracing::{error, info, warn};
 
 use crate::audit::{detect_caller_program, detect_terminal_type, AuditLogEntry, AuditLogWriter};
 use crate::detect::{DetectionEngine, DetectionResult};
+use crate::ecosystem::PackageManager;
 use crate::error::{ApmwError, Result};
 use crate::path_scan::PathScanner;
 use crate::security::{
@@ -32,6 +33,7 @@ use crate::version::{
 };
 
 use super::runner::{DefaultRunnerResolver, RunnerResolver};
+use super::suggest::{SuggestEngine, Suggestion};
 
 /// The outcome of an install-on-use add operation.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -58,6 +60,10 @@ pub struct AddResult {
   pub dry_run: bool,
   /// Any security findings (if scanning was performed).
   pub security_findings: Vec<String>,
+  /// The canonical-alternative suggestion, if the detected manager is
+  /// non-canonical (e.g. pip -> uv). `None` when the manager is already
+  /// canonical or "remains as-is".
+  pub suggestion: Option<Suggestion>,
 }
 
 /// The status of an add operation.
@@ -124,6 +130,7 @@ pub struct OnUseEngine<
   version_resolver: VersionResolver<C>,
   runner_resolver: R,
   audit_writer: Option<AuditLogWriter>,
+  suggest_engine: SuggestEngine,
 }
 
 impl OnUseEngine<DefaultRunnerResolver, MockRegistryClient> {
@@ -139,6 +146,7 @@ impl OnUseEngine<DefaultRunnerResolver, MockRegistryClient> {
       ),
       runner_resolver: DefaultRunnerResolver::new(),
       audit_writer: AuditLogWriter::new().ok(),
+      suggest_engine: SuggestEngine::new(),
     }
   }
 }
@@ -156,6 +164,7 @@ impl OnUseEngine<DefaultRunnerResolver, UreqRegistryClient> {
       ),
       runner_resolver: DefaultRunnerResolver::new(),
       audit_writer: AuditLogWriter::new().ok(),
+      suggest_engine: SuggestEngine::new(),
     }
   }
 }
@@ -181,6 +190,27 @@ impl<R: RunnerResolver, C: RegistryClient> OnUseEngine<R, C> {
       version_resolver,
       runner_resolver,
       audit_writer,
+      suggest_engine: SuggestEngine::new(),
+    }
+  }
+
+  /// Create a new engine with custom components and a custom suggest engine
+  /// (for testing).
+  pub fn with_components_and_suggest(
+    detection_engine: DetectionEngine,
+    path_scanner: PathScanner,
+    version_resolver: VersionResolver<C>,
+    runner_resolver: R,
+    audit_writer: Option<AuditLogWriter>,
+    suggest_engine: SuggestEngine,
+  ) -> Self {
+    Self {
+      detection_engine,
+      path_scanner,
+      version_resolver,
+      runner_resolver,
+      audit_writer,
+      suggest_engine,
     }
   }
 
@@ -202,6 +232,21 @@ impl<R: RunnerResolver, C: RegistryClient> OnUseEngine<R, C> {
     let detection = self.detect_manager(manager_override, project_dir)?;
     let manager = detection.manager.clone();
     info!(manager = %manager, package = package, "detected manager");
+
+    // Step 1b: Suggest the canonical alternative if the detected manager is
+    // non-canonical (e.g. pip -> uv, npm -> pnpm). The suggestion is produced
+    // before installing so the caller can surface it to the user (human mode
+    // prompt) or agent (help[] array). The install proceeds with the canonical
+    // runner regardless (the runner resolver handles remapping).
+    let suggestion =
+      PackageManager::parse_manager(&manager).and_then(|pm| self.suggest_engine.suggest(pm));
+    if let Some(ref s) = suggestion {
+      info!(
+        source = %s.source,
+        canonical = %s.canonical,
+        "suggested canonical alternative before install"
+      );
+    }
 
     // Step 2: Scan PATH — skip if the tool is already installed (Found on PATH).
     // A Wrapper result means the tool should be run via a wrapper (e.g. devbox,
@@ -225,6 +270,7 @@ impl<R: RunnerResolver, C: RegistryClient> OnUseEngine<R, C> {
         skipped: true,
         dry_run: config.dry_run,
         security_findings: Vec::new(),
+        suggestion,
       };
       self.write_audit(&result, &manager);
       self.record_telemetry(&result, &manager, start);
@@ -320,6 +366,7 @@ impl<R: RunnerResolver, C: RegistryClient> OnUseEngine<R, C> {
       skipped: false,
       dry_run,
       security_findings,
+      suggestion,
     };
 
     // Step 7: Write audit log entry.
@@ -665,5 +712,227 @@ version = "0.1.0""#,
       .unwrap();
     assert_eq!(result.status, AddStatus::DryRun);
     assert!(result.dry_run);
+  }
+
+  // ===========================================================================
+  // Suggest integration — suggestions wired into the install flow
+  // ===========================================================================
+
+  /// When the manager override is a non-canonical manager (pip), the AddResult
+  /// should include a suggestion to use the canonical alternative (uv).
+  #[tokio::test]
+  async fn test_suggest_integration_pip_to_uv() {
+    let dir = make_npm_project();
+    let engine = make_engine();
+    let config = OnUseConfig {
+      dry_run: true,
+      no_scan: true,
+      ..Default::default()
+    };
+    let result = engine
+      .run(
+        "some-nonexistent-tool-xyz",
+        Some("pip"),
+        dir.path(),
+        &config,
+      )
+      .await
+      .unwrap();
+    let suggestion = result.suggestion.expect("pip should produce a suggestion");
+    assert_eq!(suggestion.source, crate::ecosystem::PackageManager::Pip);
+    assert_eq!(suggestion.canonical, crate::ecosystem::PackageManager::Uv);
+    assert!(!suggestion.reason.is_empty());
+    // The canonical_manager in the result should be uv (runner remaps pip->uv).
+    assert_eq!(result.canonical_manager, "uv");
+  }
+
+  /// When the manager override is npm, the AddResult should include a
+  /// suggestion to use pnpm.
+  #[tokio::test]
+  async fn test_suggest_integration_npm_to_pnpm() {
+    let dir = make_npm_project();
+    let engine = make_engine();
+    let config = OnUseConfig {
+      dry_run: true,
+      no_scan: true,
+      ..Default::default()
+    };
+    let result = engine
+      .run(
+        "some-nonexistent-tool-xyz",
+        Some("npm"),
+        dir.path(),
+        &config,
+      )
+      .await
+      .unwrap();
+    let suggestion = result.suggestion.expect("npm should produce a suggestion");
+    assert_eq!(suggestion.source, crate::ecosystem::PackageManager::Npm);
+    assert_eq!(suggestion.canonical, crate::ecosystem::PackageManager::Pnpm);
+    assert_eq!(result.canonical_manager, "pnpm");
+  }
+
+  /// When the manager override is yarn, the AddResult should include a
+  /// suggestion to use pnpm.
+  #[tokio::test]
+  async fn test_suggest_integration_yarn_to_pnpm() {
+    let dir = make_npm_project();
+    let engine = make_engine();
+    let config = OnUseConfig {
+      dry_run: true,
+      no_scan: true,
+      ..Default::default()
+    };
+    let result = engine
+      .run(
+        "some-nonexistent-tool-xyz",
+        Some("yarn"),
+        dir.path(),
+        &config,
+      )
+      .await
+      .unwrap();
+    let suggestion = result.suggestion.expect("yarn should produce a suggestion");
+    assert_eq!(suggestion.source, crate::ecosystem::PackageManager::Yarn);
+    assert_eq!(suggestion.canonical, crate::ecosystem::PackageManager::Pnpm);
+  }
+
+  /// When the manager override is bun, the AddResult should include a
+  /// suggestion to use pnpm.
+  #[tokio::test]
+  async fn test_suggest_integration_bun_to_pnpm() {
+    let dir = make_npm_project();
+    let engine = make_engine();
+    let config = OnUseConfig {
+      dry_run: true,
+      no_scan: true,
+      ..Default::default()
+    };
+    let result = engine
+      .run(
+        "some-nonexistent-tool-xyz",
+        Some("bun"),
+        dir.path(),
+        &config,
+      )
+      .await
+      .unwrap();
+    let suggestion = result.suggestion.expect("bun should produce a suggestion");
+    assert_eq!(suggestion.source, crate::ecosystem::PackageManager::Bun);
+    assert_eq!(suggestion.canonical, crate::ecosystem::PackageManager::Pnpm);
+  }
+
+  /// When the manager override is yarn2, the AddResult should include a
+  /// suggestion to use pnpm.
+  #[tokio::test]
+  async fn test_suggest_integration_yarn2_to_pnpm() {
+    let dir = make_npm_project();
+    let engine = make_engine();
+    let config = OnUseConfig {
+      dry_run: true,
+      no_scan: true,
+      ..Default::default()
+    };
+    let result = engine
+      .run(
+        "some-nonexistent-tool-xyz",
+        Some("yarn2"),
+        dir.path(),
+        &config,
+      )
+      .await
+      .unwrap();
+    let suggestion = result
+      .suggestion
+      .expect("yarn2 should produce a suggestion");
+    assert_eq!(suggestion.source, crate::ecosystem::PackageManager::Yarn2);
+    assert_eq!(suggestion.canonical, crate::ecosystem::PackageManager::Pnpm);
+  }
+
+  /// When the manager is already canonical (pnpm), no suggestion is produced.
+  #[tokio::test]
+  async fn test_suggest_integration_canonical_no_suggestion() {
+    let dir = make_npm_project();
+    let engine = make_engine();
+    let config = OnUseConfig {
+      dry_run: true,
+      no_scan: true,
+      ..Default::default()
+    };
+    let result = engine
+      .run(
+        "some-nonexistent-tool-xyz",
+        Some("pnpm"),
+        dir.path(),
+        &config,
+      )
+      .await
+      .unwrap();
+    assert!(result.suggestion.is_none());
+  }
+
+  /// When the manager "remains as-is" (cargo), no suggestion is produced.
+  #[tokio::test]
+  async fn test_suggest_integration_cargo_no_suggestion() {
+    let dir = make_cargo_project();
+    let engine = make_engine();
+    let config = OnUseConfig {
+      dry_run: true,
+      no_scan: true,
+      ..Default::default()
+    };
+    let result = engine
+      .run(
+        "some-nonexistent-tool-xyz",
+        Some("cargo"),
+        dir.path(),
+        &config,
+      )
+      .await
+      .unwrap();
+    assert!(result.suggestion.is_none());
+  }
+
+  /// When the manager "remains as-is" (poetry), no suggestion is produced —
+  /// poetry is not forced to uv even though uv is the Python ecosystem canonical.
+  #[tokio::test]
+  async fn test_suggest_integration_poetry_no_suggestion() {
+    let dir = make_npm_project();
+    let engine = make_engine();
+    let config = OnUseConfig {
+      dry_run: true,
+      no_scan: true,
+      ..Default::default()
+    };
+    let result = engine
+      .run(
+        "some-nonexistent-tool-xyz",
+        Some("poetry"),
+        dir.path(),
+        &config,
+      )
+      .await
+      .unwrap();
+    assert!(result.suggestion.is_none());
+  }
+
+  /// The suggestion is present even when the tool is already on PATH (skipped).
+  #[tokio::test]
+  async fn test_suggest_integration_present_when_skipped() {
+    let dir = make_npm_project();
+    let engine = make_engine();
+    let config = OnUseConfig {
+      no_scan: true,
+      ..Default::default()
+    };
+    // "cargo" is very likely on PATH in the test environment.
+    let result = engine
+      .run("cargo", Some("pip"), dir.path(), &config)
+      .await
+      .unwrap();
+    assert_eq!(result.status, AddStatus::AlreadyInstalled);
+    // The suggestion should still be present even though the add was skipped.
+    let suggestion = result.suggestion.expect("pip should produce a suggestion");
+    assert_eq!(suggestion.canonical, crate::ecosystem::PackageManager::Uv);
   }
 }

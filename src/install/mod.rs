@@ -32,10 +32,12 @@
 pub mod dev;
 pub mod on_use;
 pub mod runner;
+pub mod suggest;
 
 pub use dev::{dev_add_command, dev_flags, supports_dev};
 pub use on_use::{AddResult, AddStatus, OnUseConfig, OnUseEngine};
 pub use runner::{DefaultRunnerResolver, MockRunnerResolver, Runner, RunnerResolver};
+pub use suggest::{OfferResult, SuggestEngine, Suggestion};
 
 use std::path::Path;
 
