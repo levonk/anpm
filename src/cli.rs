@@ -294,6 +294,11 @@ pub struct Cli {
   #[arg(long)]
   pub uninstall: bool,
 
+  /// Install or remove PATH shims that intercept package manager calls
+  /// (used with `--install` or `--uninstall`).
+  #[arg(long)]
+  pub intercept: bool,
+
   /// Shell to generate completions for (used with --install).
   #[arg(long, value_name = "SHELL", requires = "install")]
   pub shell: Option<Shell>,
@@ -368,6 +373,21 @@ pub enum Commands {
   Governance {
     #[command(subcommand)]
     subcommand: GovernanceSubcommand,
+  },
+
+  /// Intercept a package manager call (invoked by PATH shims).
+  ///
+  /// This subcommand is normally called by the shims installed via
+  /// `--install --intercept`. It evaluates governance rules, runs security
+  /// scanning, and then delegates to the real binary (or the canonical
+  /// alternative if governance forces it).
+  Intercept {
+    /// The package manager tool that was intercepted (e.g. `pip`, `npm`).
+    tool: String,
+
+    /// Arguments to pass through to the (canonical) package manager.
+    #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+    args: Vec<String>,
   },
 }
 
