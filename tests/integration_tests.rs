@@ -534,6 +534,7 @@ fn test_manager_override_confidence_is_max() {
 }
 
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 // Intercept hooks integration tests (story 06-002)
 // ---------------------------------------------------------------------------
 
@@ -589,4 +590,108 @@ fn test_intercept_subcommand_with_version_flag() {
     .assert()
     .success()
     .stdout(contains("npm"));
+}
+
+// ---------------------------------------------------------------------------
+// Install (add engine) integration tests (story 04-001)
+// ---------------------------------------------------------------------------
+
+#[test]
+fn test_install_with_dry_run() {
+  let dir = make_project_dir(&["package.json"]);
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .current_dir(dir.path())
+    .arg("install")
+    .arg("express")
+    .arg("--manager")
+    .arg("pnpm")
+    .arg("--dry-run")
+    .arg("--no-scan")
+    .assert()
+    .success()
+    .stdout(contains("via pnpm"));
+}
+
+#[test]
+fn test_install_dev_flag() {
+  let dir = make_project_dir(&["package.json"]);
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .current_dir(dir.path())
+    .arg("install")
+    .arg("express")
+    .arg("--dev")
+    .arg("--manager")
+    .arg("pnpm")
+    .arg("--dry-run")
+    .arg("--no-scan")
+    .assert()
+    .success()
+    .stdout(contains("(dev)"));
+}
+
+#[test]
+fn test_install_manager_override_cargo() {
+  let dir = make_project_dir(&["package.json"]);
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .current_dir(dir.path())
+    .arg("install")
+    .arg("serde")
+    .arg("--manager")
+    .arg("cargo")
+    .arg("--dry-run")
+    .arg("--no-scan")
+    .assert()
+    .success()
+    .stdout(contains("via cargo"));
+}
+
+#[test]
+fn test_install_dry_run_outputs_toon() {
+  let dir = make_project_dir(&["package.json"]);
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .current_dir(dir.path())
+    .arg("install")
+    .arg("express")
+    .arg("--manager")
+    .arg("pnpm")
+    .arg("--dry-run")
+    .arg("--no-scan")
+    .arg("--json")
+    .assert()
+    .success()
+    .stdout(contains("\"item\""));
+}
+
+#[test]
+fn test_install_no_manager_detected_errors() {
+  let dir = TempDir::new().expect("failed to create temp dir");
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .current_dir(dir.path())
+    .arg("install")
+    .arg("some-tool")
+    .arg("--no-scan")
+    .assert()
+    .failure();
+}
+
+#[test]
+fn test_install_path_scan_skips() {
+  // "cargo" is on PATH in the test environment — should skip.
+  let dir = make_project_dir(&["package.json"]);
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .current_dir(dir.path())
+    .arg("install")
+    .arg("cargo")
+    .arg("--manager")
+    .arg("pnpm")
+    .arg("--no-scan")
+    .assert()
+    .success()
+    .stdout(contains("already"));
 }
