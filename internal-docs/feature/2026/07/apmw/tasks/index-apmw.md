@@ -72,7 +72,7 @@
 | Story ID | Title | Phase | Status | Assignee | Parallel-safe | Dependencies | Dependants | Modules | Branch |
 |---|---|---:|---|---|---|---|---|---|---|
 | 06-001 | MCP server (stdio transport, add/detect/scan tools) | 06 | [ ] Todo |  | true | 01-002, 01-003, 01-004, 02-001, 04-001, 04-002, 04-004, 05-001 | 07-001 | src/agent/mcp.rs | feature/current/apmw/story-06-001-mcp-server |
-| 06-002 | AI agent coding hooks (hard intercept + soft convention, governance-aware) | 06 | [ ] Todo |  | true | 01-001, 03-002, 04-003 | 07-001 | src/agent/hooks.rs | feature/current/apmw/story-06-002-agent-hooks |
+| 06-002 | AI agent coding hooks (hard intercept + soft convention, governance-aware) | 06 | [x] Done |  | true | 01-001, 03-002, 04-003 | 07-001 | src/agent/hooks.rs | feature/current/apmw/story-06-002-agent-hooks |
 | 06-003 | Installable Agent Skills + session integrations + docs notification | 06 | [ ] Todo |  | true | 01-002, 01-003, 04-001 | 07-001 | src/agent/skills.rs, src/agent/docs_notify.rs | feature/current/apmw/story-06-003-agent-skills-docs-notify |
 
 ### Phase 07 — Multi-Ecosystem Release + CI/CD + Documentation
