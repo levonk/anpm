@@ -56,7 +56,7 @@
 | Story ID | Title | Phase | Status | Assignee | Parallel-safe | Dependencies | Dependants | Modules | Branch |
 |---|---|---:|---|---|---|---|---|---|---|
 | 04-001 | Add engine (runtime + --dev deps, install-on-use, devbox+rtk routing, --manager override) | 04 | [x] Done |  | false | 01-002, 01-003, 01-005, 02-001, 02-002, 02-003, 02-004, 03-001, 03-002, 03-003 | 05-001, 06-001, 06-003 | src/install/ | feature/current/apmw/story-04-001-add-engine |
-| 04-002 | Alternative suggestions engine (within-ecosystem only) | 04 | [ ] Todo |  | true | 02-003 | 06-001 | src/install/suggest.rs | feature/current/apmw/story-04-002-alternative-suggestions |
+| 04-002 | Alternative suggestions engine (within-ecosystem only) | 04 | [~] In-Progress |  | true | 02-003 | 06-001 | src/install/suggest.rs | feature/current/apmw/story-04-002-alternative-suggestions |
 | 04-003 | Governance engine (reads prefer/force/block/eject from levonk-packages spec) | 04 | [x] Done |  | true | 01-001, 02-003 | 06-002 | src/governance/ | feature/current/apmw/story-04-003-governance-engine |
 | 04-004 | Container package support (docker/podman image pull/scan/list, compose detection) | 04 | [x] Done |  | true | 02-001, 03-003 | 06-001 | src/containers/ | feature/current/apmw/story-04-004-container-packages |
 | 04-005 | Anonymized telemetry collector (categorical usage, opt-out, non-blocking) | 04 | [x] Done |  | true | 01-001 | 07-002 | src/telemetry/ | feature/current/apmw/story-04-005-telemetry-collector |
@@ -65,7 +65,7 @@
 
 | Story ID | Title | Phase | Status | Assignee | Parallel-safe | Dependencies | Dependants | Modules | Branch |
 |---|---|---:|---|---|---|---|---|---|---|
-| 05-001 | Historyless clone engine + local .gitignore + AST indexing | 05 | [ ] Todo |  | false | 01-001, 01-004, 01-005, 02-001 | 06-001 | src/clone/ | feature/current/apmw/story-05-001-historyless-clone-ast-index |
+| 05-001 | Historyless clone engine + local .gitignore + AST indexing | 05 | [~] In-Progress |  | false | 01-001, 01-004, 01-005, 02-001 | 06-001 | src/clone/ | feature/current/apmw/story-05-001-historyless-clone-ast-index |
 
 ### Phase 06 — AI Agent Integration (MCP, Hooks, Skills, Docs Notification)
 
@@ -73,7 +73,7 @@
 |---|---|---:|---|---|---|---|---|---|---|
 | 06-001 | MCP server (stdio transport, add/detect/scan tools) | 06 | [ ] Todo |  | true | 01-002, 01-003, 01-004, 02-001, 04-001, 04-002, 04-004, 05-001 | 07-001 | src/agent/mcp.rs | feature/current/apmw/story-06-001-mcp-server |
 | 06-002 | AI agent coding hooks (hard intercept + soft convention, governance-aware) | 06 | [x] Done |  | true | 01-001, 03-002, 04-003 | 07-001 | src/agent/hooks.rs | feature/current/apmw/story-06-002-agent-hooks |
-| 06-003 | Installable Agent Skills + session integrations + docs notification | 06 | [ ] Todo |  | true | 01-002, 01-003, 04-001 | 07-001 | src/agent/skills.rs, src/agent/docs_notify.rs | feature/current/apmw/story-06-003-agent-skills-docs-notify |
+| 06-003 | Installable Agent Skills + session integrations + docs notification | 06 | [~] In-Progress |  | true | 01-002, 01-003, 04-001 | 07-001 | src/agent/skills.rs, src/agent/docs_notify.rs | feature/current/apmw/story-06-003-agent-skills-docs-notify |
 
 ### Phase 07 — Multi-Ecosystem Release + CI/CD + Documentation
 
