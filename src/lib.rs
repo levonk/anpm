@@ -13,6 +13,7 @@ pub mod detect;
 pub mod ecosystem;
 pub mod error;
 pub mod governance;
+pub mod install;
 pub mod output;
 pub mod path_scan;
 pub mod security;
@@ -35,6 +36,11 @@ pub use error::{ApmwError, Result};
 pub use governance::{
   GovernanceConfig, GovernanceEngine, GovernanceOutcome, GovernanceRule, GovernanceSpec,
   GovernanceType, MockSpecClient, ReqwestSpecClient, SpecLoader, WrapperKind, WrapperSpec,
+};
+pub use install::{
+  dev_add_command, dev_flags, supports_dev, AddEngine, AddEngineConfig, AddResult, AddStatus,
+  DefaultRunnerResolver, MockRunnerResolver, OnUseConfig, OnUseEngine, RoutingDecision, Runner,
+  RunnerResolver,
 };
 pub use output::{AgentFormat, OutputDispatcher, OutputMode, Schema, TruncationConfig};
 pub use path_scan::{PathScanner, ScanConfig, ScanResult, ScanSource};

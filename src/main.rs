@@ -123,11 +123,71 @@ async fn dispatch_subcommand(cli: Cli) -> anyhow::Result<()> {
 
   match cli.command {
     Some(Commands::Install { package, dev }) => {
+      let dir = std::env::current_dir()?;
+      let on_risk = cli
+        .global
+        .on_risk
+        .map(|a| match a {
+          apmw::cli::OnRiskAction::Prompt => apmw::security::OnRiskMode::Prompt,
+          apmw::cli::OnRiskAction::Abort => apmw::security::OnRiskMode::Error,
+          apmw::cli::OnRiskAction::Proceed => apmw::security::OnRiskMode::Warn,
+          apmw::cli::OnRiskAction::Quarantine => apmw::security::OnRiskMode::Skip,
+        })
+        .unwrap_or_default();
+
+      let engine_config = apmw::install::AddEngineConfig {
+        dev,
+        dry_run: cli.global.dry_run,
+        no_scan: cli.global.no_scan,
+        scan_only: cli.global.scan_only,
+        manager_override: cli.global.manager.clone(),
+        version_spec: String::new(),
+        use_devbox: true,
+        on_risk,
+        min_age: apmw::version::MinAgeDaysConfig::default(),
+      };
+
+      let engine = apmw::install::AddEngine::new();
+      let result = engine.run(&package, &dir, &engine_config).await?;
+
+      // Build the output.
+      let mut dispatcher = OutputDispatcher::from_flags(
+        cli.global.human,
+        cli.global.json,
+        cli.global.fields.as_deref(),
+        cli.global.full,
+      );
+      dispatcher.schema = apmw::output::Schema::with_fields_str(
+        vec![
+          "package".into(),
+          "manager".into(),
+          "canonical_manager".into(),
+          "status".into(),
+        ],
+        cli.global.fields.as_deref(),
+      );
+
+      let item = serde_json::to_value(&result).unwrap_or(serde_json::json!({}));
+      let help = vec![
+        format!("apmw install {} --dev", package),
+        format!("apmw install {} --dry-run", package),
+      ];
+      let output = dispatcher.render_item(&item, &help);
+
+      // Print a summary line with "via {manager}" for backward compatibility
+      // with existing integration tests, then the structured output.
       let dev_tag = if dev { " (dev)" } else { "" };
-      match &cli.global.manager {
-        Some(m) => println!("Installing {package}{dev_tag} via {m}..."),
-        None => println!("Installing {package}{dev_tag}..."),
+      let manager_label = if result.manager.is_empty() {
+        result.canonical_manager.clone()
+      } else {
+        result.manager.clone()
+      };
+      if manager_label.is_empty() {
+        println!("Installed {package}{dev_tag}");
+      } else {
+        println!("Installed {package}{dev_tag} via {manager_label}");
       }
+      println!("{output}");
     }
     Some(Commands::Detect) => {
       let dir = std::env::current_dir()?;
