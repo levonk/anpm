@@ -55,7 +55,7 @@
 
 | Story ID | Title | Phase | Status | Assignee | Parallel-safe | Dependencies | Dependants | Modules | Branch |
 |---|---|---:|---|---|---|---|---|---|---|
-| 04-001 | Add engine (runtime + --dev deps, install-on-use, devbox+rtk routing, --manager override) | 04 | [ ] Todo |  | false | 01-002, 01-003, 01-005, 02-001, 02-002, 02-003, 02-004, 03-001, 03-002, 03-003 | 05-001, 06-001, 06-003 | src/install/ | feature/current/apmw/story-04-001-add-engine |
+| 04-001 | Add engine (runtime + --dev deps, install-on-use, devbox+rtk routing, --manager override) | 04 | [x] Done |  | false | 01-002, 01-003, 01-005, 02-001, 02-002, 02-003, 02-004, 03-001, 03-002, 03-003 | 05-001, 06-001, 06-003 | src/install/ | feature/current/apmw/story-04-001-add-engine |
 | 04-002 | Alternative suggestions engine (within-ecosystem only) | 04 | [ ] Todo |  | true | 02-003 | 06-001 | src/install/suggest.rs | feature/current/apmw/story-04-002-alternative-suggestions |
 | 04-003 | Governance engine (reads prefer/force/block/eject from levonk-packages spec) | 04 | [x] Done |  | true | 01-001, 02-003 | 06-002 | src/governance/ | feature/current/apmw/story-04-003-governance-engine |
 | 04-004 | Container package support (docker/podman image pull/scan/list, compose detection) | 04 | [x] Done |  | true | 02-001, 03-003 | 06-001 | src/containers/ | feature/current/apmw/story-04-004-container-packages |
