@@ -80,52 +80,54 @@ Create the installable Agent Skills (SKILL.md generation from the no-args home v
 
 ## Sub-Tasks
 
-- [ ] Create `src/agent/skills.rs` with SkillGenerator
+- [x] Create `src/agent/skills.rs` with SkillGenerator
   **Verify**: `cargo check` → exit 0
-- [ ] Implement SKILL.md generation from no-args home view content
+- [x] Implement SKILL.md generation from no-args home view content
   **Verify**: `cargo test skill_generation` → tests pass
-- [ ] Implement --check build step for CI (fail if SKILL.md is stale)
+- [x] Implement --check build step for CI (fail if SKILL.md is stale)
   **Verify**: `cargo test skill_check` → tests pass
-- [ ] Implement Claude Code session integration (SessionStart hook)
+- [x] Implement Claude Code session integration (SessionStart hook)
   **Verify**: `cargo test claude_integration` → tests pass
-- [ ] Implement Codex session integration (SessionStart hook)
+- [x] Implement Codex session integration (SessionStart hook)
   **Verify**: `cargo test codex_integration` → tests pass
-- [ ] Implement OpenCode session integration (managed plugin)
+- [x] Implement OpenCode session integration (managed plugin)
   **Verify**: `cargo test opencode_integration` → tests pass
-- [ ] Implement idempotent install (repeated installs are no-ops)
+- [x] Implement idempotent install (repeated installs are no-ops)
   **Verify**: `cargo test idempotent` → tests pass
-- [ ] Implement directory-scoped context (show only current directory state)
+- [x] Implement directory-scoped context (show only current directory state)
   **Verify**: `cargo test directory_scoped` → tests pass
-- [ ] Create `src/agent/docs_notify.rs` with DocsNotifier
+- [x] Create `src/agent/docs_notify.rs` with DocsNotifier
   **Verify**: `cargo check` → exit 0
-- [ ] Implement docs notification (package name, docs URL, local README path)
+- [x] Implement docs notification (package name, docs URL, local README path)
   **Verify**: `cargo test docs_notify` → tests pass
-- [ ] Wire docs notification into add flow
+- [x] Wire docs notification into add flow
   **Verify**: `cargo test docs_integration` → tests pass
-- [ ] Add unit tests for all components
+- [x] Add unit tests for all components
   **Verify**: `just test` → all pass
-- [ ] Run `just validate`
+- [x] Run `just validate`
   **Verify**: `just validate` → all gates pass
 
 ## Relevant Files
 
-- `src/agent/skills.rs` — Agent Skills generation
-- `src/agent/docs_notify.rs` — Docs notification
-- `src/agent/mod.rs` — Agent module root
+- `src/agent/skills.rs` — Agent Skills generation (SkillGenerator, session integrations)
+- `src/agent/docs_notify.rs` — Docs notification (DocsNotifier, DocsNotification)
+- `src/agent/mod.rs` — Agent module root (updated with submodule declarations and exports)
+- `src/lib.rs` — Library root (updated with pub use exports for new types)
+- `src/install/on_use.rs` — Install-on-use engine (updated with docs notification step 9)
 
 ## Acceptance Criteria
 
-- [ ] SKILL.md is generated from the no-args home view content
-- [ ] --check build step fails if committed SKILL.md is stale
-- [ ] Claude Code session integration installs SessionStart hook
-- [ ] Codex session integration installs SessionStart hook
-- [ ] OpenCode session integration installs managed plugin
-- [ ] Session integrations are idempotent
-- [ ] Session integrations are directory-scoped
-- [ ] Docs notification includes package name, docs URL, local README path
-- [ ] Docs notification fires after add
-- [ ] All unit tests pass
-- [ ] `just validate` passes
+- [x] SKILL.md is generated from the no-args home view content
+- [x] --check build step fails if committed SKILL.md is stale
+- [x] Claude Code session integration installs SessionStart hook
+- [x] Codex session integration installs SessionStart hook
+- [x] OpenCode session integration installs managed plugin
+- [x] Session integrations are idempotent
+- [x] Session integrations are directory-scoped
+- [x] Docs notification includes package name, docs URL, local README path
+- [x] Docs notification fires after add
+- [x] All unit tests pass
+- [x] `just validate` passes
 
 ## Test Plan
 
@@ -156,9 +158,9 @@ Create the installable Agent Skills (SKILL.md generation from the no-args home v
 
 ## Definition of Done
 
-- [ ] All verification commands pass
-- [ ] Code, tests, docs updated; CI green; story file updated
-- [ ] No files outside in-scope list are modified
+- [x] All verification commands pass
+- [x] Code, tests, docs updated; CI green; story file updated
+- [x] No files outside in-scope list are modified
 
 ## STOP Conditions
 

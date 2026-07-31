@@ -22,8 +22,12 @@ pub mod telemetry;
 pub mod version;
 
 pub use agent::{
-  default_shim_dir, generate_soft_convention_instructions, HookManager, InterceptAction,
-  InterceptDecision, InterceptResult, ShimSpec, SHIM_MARKER, SHIM_TARGETS,
+  default_shim_dir, generate_soft_convention_instructions, home_dir, home_view_content,
+  install_all_session_integrations, install_session_integration, notify_docs,
+  run_docs_notification, should_notify, ClaudeCodeInstaller, CodexInstaller, DocsNotification,
+  DocsNotifier, HookManager, IntegrationResult, InterceptAction, InterceptDecision,
+  InterceptResult, OpenCodeInstaller, SessionIntegration, SessionIntegrationInstaller, ShimSpec,
+  SkillGenerator, APMW_MARKER, SHIM_MARKER, SHIM_TARGETS, SKILL_FILENAME,
 };
 pub use audit::{AuditLogEntry, AuditLogWriter, TerminalType};
 pub use cli::{Cli, Commands};
