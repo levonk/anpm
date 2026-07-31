@@ -532,3 +532,61 @@ fn test_manager_override_confidence_is_max() {
     .success()
     .stdout(contains("\"confidence\":1.0"));
 }
+
+// ---------------------------------------------------------------------------
+// Intercept hooks integration tests (story 06-002)
+// ---------------------------------------------------------------------------
+
+#[test]
+fn test_install_intercept_creates_shims() {
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .arg("--install")
+    .arg("--intercept")
+    .assert()
+    .success()
+    .stdout(contains("Installed"))
+    .stdout(contains("intercept shim"));
+}
+
+#[test]
+fn test_uninstall_intercept_removes_shims() {
+  // Install first, then uninstall.
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd.arg("--install").arg("--intercept").assert().success();
+
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .arg("--uninstall")
+    .arg("--intercept")
+    .assert()
+    .success()
+    .stdout(contains("Removed"));
+}
+
+#[test]
+fn test_intercept_subcommand_delegates_no_governance() {
+  // With no governance rules, intercept should delegate to the original tool.
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .arg("intercept")
+    .arg("pip")
+    .arg("install")
+    .arg("foo")
+    .assert()
+    .success()
+    .stdout(contains("pip"));
+}
+
+#[test]
+fn test_intercept_subcommand_with_version_flag() {
+  // --version is a read-only command — should still succeed and delegate.
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .arg("intercept")
+    .arg("npm")
+    .arg("--version")
+    .assert()
+    .success()
+    .stdout(contains("npm"));
+}

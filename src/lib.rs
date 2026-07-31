@@ -4,6 +4,7 @@
 //! correct package manager, installs tools with install-on-use semantics, and
 //! runs security scanning before install.
 
+pub mod agent;
 pub mod audit;
 pub mod cli;
 pub mod config;
@@ -19,6 +20,10 @@ pub mod security;
 pub mod telemetry;
 pub mod version;
 
+pub use agent::{
+  default_shim_dir, generate_soft_convention_instructions, HookManager, InterceptAction,
+  InterceptDecision, InterceptResult, ShimSpec, SHIM_MARKER, SHIM_TARGETS,
+};
 pub use audit::{AuditLogEntry, AuditLogWriter, TerminalType};
 pub use cli::{Cli, Commands};
 pub use config::ApmwConfig;

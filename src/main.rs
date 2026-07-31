@@ -6,13 +6,14 @@
 use clap::{CommandFactory, Parser};
 use clap_complete::{generate, Shell as CompleteShell};
 
+use apmw::agent::{default_shim_dir, HookManager};
 use apmw::audit::{detect_caller_program, detect_terminal_type, AuditLogEntry, AuditLogWriter};
 use apmw::cli::{Cli, Commands, GovernanceSubcommand, Shell};
 use apmw::config;
 use apmw::daemon::{DaemonManager, JobId};
 use apmw::detect::{DetectionEngine, DetectionResult};
 use apmw::error::ApmwError;
-use apmw::governance::{ReqwestSpecClient, SpecLoader};
+use apmw::governance::{GovernanceEngine, ReqwestSpecClient, SpecLoader};
 use apmw::output::OutputDispatcher;
 use apmw::path_scan::PathScanner;
 
@@ -20,10 +21,16 @@ fn main() -> anyhow::Result<()> {
   let cli = Cli::parse();
 
   if cli.install {
+    if cli.intercept {
+      return run_install_intercept();
+    }
     return run_install(cli.shell);
   }
 
   if cli.uninstall {
+    if cli.intercept {
+      return run_uninstall_intercept();
+    }
     return run_uninstall();
   }
 
@@ -266,6 +273,33 @@ async fn dispatch_subcommand(cli: Cli) -> anyhow::Result<()> {
         }
       }
     },
+    Some(Commands::Intercept { tool, args }) => {
+      // Invoked by PATH shims. Evaluate governance + security, then print
+      // the effective tool and args for the shim to exec.
+      let engine = GovernanceEngine::default();
+      let mgr = HookManager::new(engine);
+      match mgr.intercept(&tool, &args) {
+        Ok(result) => {
+          if result.decision.run_security_scan {
+            tracing::info!(
+              tool = tool,
+              effective = result.effective_tool.as_str(),
+              "intercepted call requires security scan"
+            );
+          }
+          // Output the effective command so the shim can exec it.
+          // Format: <tool>\0<arg1>\0<arg2>...
+          // The shim reads this and execs the effective tool.
+          let mut parts = vec![result.effective_tool.clone()];
+          parts.extend(result.effective_args.iter().cloned());
+          println!("{}", parts.join("\u{0}"));
+        }
+        Err(e) => {
+          eprintln!("apmw intercept: {e}");
+          return Err(anyhow::anyhow!(e));
+        }
+      }
+    }
     None => {
       println!("apmw v{} — run 'apmw --help' for usage", apmw::version());
     }
@@ -331,6 +365,61 @@ fn run_uninstall() -> anyhow::Result<()> {
     "Completion scripts: remove _apmw / apmw.bash / apmw.fish from your shell completion dirs."
   );
   Ok(())
+}
+
+/// Install PATH shims that intercept package manager calls (hard intercept).
+///
+/// Shims are written to the default shim directory. The user should add this
+/// directory to the front of their PATH so the shims take precedence over the
+/// real binaries.
+fn run_install_intercept() -> anyhow::Result<()> {
+  let dir = default_shim_dir().map_err(|e| anyhow::anyhow!(e))?;
+  let engine = GovernanceEngine::default();
+  let mgr = HookManager::new(engine);
+  match mgr.install_shims(&dir) {
+    Ok(installed) => {
+      println!(
+        "Installed {} intercept shim(s) to {}",
+        installed.len(),
+        dir.display()
+      );
+      println!();
+      println!("Add this directory to the FRONT of your PATH:");
+      println!("  export PATH=\"{}:$PATH\"", dir.display());
+      println!();
+      println!("To remove the shims later: apmw --uninstall --intercept");
+      Ok(())
+    }
+    Err(e) => {
+      eprintln!("Failed to install intercept shims: {e}");
+      Err(anyhow::anyhow!(e))
+    }
+  }
+}
+
+/// Remove PATH shims that intercept package manager calls.
+fn run_uninstall_intercept() -> anyhow::Result<()> {
+  let dir = default_shim_dir().map_err(|e| anyhow::anyhow!(e))?;
+  let engine = GovernanceEngine::default();
+  let mgr = HookManager::new(engine);
+  match mgr.uninstall_shims(&dir) {
+    Ok(removed) => {
+      if removed.is_empty() {
+        println!("No intercept shims found in {}", dir.display());
+      } else {
+        println!(
+          "Removed {} intercept shim(s) from {}",
+          removed.len(),
+          dir.display()
+        );
+      }
+      Ok(())
+    }
+    Err(e) => {
+      eprintln!("Failed to remove intercept shims: {e}");
+      Err(anyhow::anyhow!(e))
+    }
+  }
 }
 
 /// Record a `--manager` override in the audit log with source `cli-override`.
