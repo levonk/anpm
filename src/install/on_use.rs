@@ -232,8 +232,16 @@ impl<R: RunnerResolver, C: RegistryClient> OnUseEngine<R, C> {
     }
     info!(package = package, "tool not on PATH, proceeding with add");
 
-    // Step 3: Resolve the version.
-    let version_resolution = self.resolve_version(&manager, package, project_dir, config)?;
+    // Step 3: Resolve the version (skip actual resolution in dry-run mode).
+    let version_resolution = if config.dry_run || config.scan_only {
+      crate::version::VersionResolution {
+        requested: String::new(),
+        resolved: String::new(),
+        resolution_strategy: crate::version::ResolutionStrategy::Latest,
+      }
+    } else {
+      self.resolve_version(&manager, package, project_dir, config)?
+    };
     info!(
       package = package,
       version = %version_resolution.resolved,
