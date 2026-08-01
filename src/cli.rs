@@ -389,6 +389,14 @@ pub enum Commands {
     #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
     args: Vec<String>,
   },
+
+  /// Start the MCP (Model Context Protocol) server over stdio.
+  ///
+  /// AI agents (Claude Code, Codex, OpenCode) connect to this server to
+  /// invoke apmw operations (add, detect, scan, clone, etc.) as MCP tools.
+  /// The server reads line-delimited JSON-RPC 2.0 messages from stdin and
+  /// writes responses to stdout.
+  Mcp,
 }
 
 /// Subcommands for `apmw governance`.

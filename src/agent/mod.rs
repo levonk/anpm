@@ -14,6 +14,7 @@
 
 pub mod docs_notify;
 pub mod hooks;
+pub mod mcp;
 pub mod skills;
 
 pub use docs_notify::{
@@ -22,6 +23,12 @@ pub use docs_notify::{
 pub use hooks::{
   default_shim_dir, generate_soft_convention_instructions, HookManager, InterceptAction,
   InterceptDecision, InterceptResult, ShimSpec, SHIM_MARKER, SHIM_TARGETS,
+};
+pub use mcp::{
+  run_stdio_server, ContentItem, InitializeResult, JsonRpcErrorResponse, JsonRpcMessage,
+  JsonRpcResponse, McpResponse, McpServer, RequestId, RpcError, ServerCapabilities, ServerInfo,
+  StdioTransport, Tool, ToolCallResult, ToolDefinition, ToolListResult, ToolRegistry, Transport,
+  DEFAULT_MAX_CONCURRENT_TOOLS, PROTOCOL_VERSION, SERVER_NAME,
 };
 pub use skills::{
   home_dir, home_view_content, install_all_session_integrations, install_session_integration,
