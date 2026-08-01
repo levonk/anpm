@@ -1,0 +1,154 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH apmw 1  "apmw 0.1.0" 
+.SH NAME
+apmw \- All Package Manager Wrapper
+.SH SYNOPSIS
+\fBapmw\fR [\fB\-\-install\fR] [\fB\-\-uninstall\fR] [\fB\-\-intercept\fR] [\fB\-\-shell\fR] [\fB\-\-man\fR] [\fB\-\-usage\fR] [\fB\-\-json\fR] [\fB\-\-color\fR] [\fB\-\-human\fR] [\fB\-v\fR|\fB\-\-verbose\fR]... [\fB\-q\fR|\fB\-\-quiet\fR] [\fB\-\-debug\fR] [\fB\-\-dry\-run\fR] [\fB\-\-force\fR] [\fB\-\-interactive\fR] [\fB\-\-no\-pager\fR] [\fB\-\-no\-scan\fR] [\fB\-\-scan\-only\fR] [\fB\-\-on\-risk\fR] [\fB\-\-update\-security\-db\fR] [\fB\-\-fields\fR] [\fB\-\-full\fR] [\fB\-\-daemon\fR] [\fB\-\-no\-daemon\fR] [\fB\-\-list\-jobs\fR] [\fB\-\-cancel\-job\fR] [\fB\-\-manager\fR] [\fB\-\-no\-telemetry\fR] [\fB\-\-telemetry\-preview\fR] [\fB\-h\fR|\fB\-\-help\fR] [\fB\-V\fR|\fB\-\-version\fR] [\fIsubcommands\fR]
+.SH DESCRIPTION
+Abstracts every package installer into one intelligent surface.
+Detects the correct package manager, installs tools with install\-on\-use
+semantics, and runs security scanning before install.
+.SH OPTIONS
+.TP
+\fB\-\-install\fR
+Generate shell completions and initialize the config file
+.TP
+\fB\-\-uninstall\fR
+Remove generated completions and config (best\-effort cleanup)
+.TP
+\fB\-\-intercept\fR
+Install or remove PATH shims that intercept package manager calls (used with `\-\-install` or `\-\-uninstall`)
+.TP
+\fB\-\-shell\fR \fI<SHELL>\fR
+Shell to generate completions for (used with \-\-install)
+.TP
+\fB\-\-man\fR
+Print the man page to stdout (groff/troff format) and exit.
+
+The output can be piped to `man \-l \-` or saved to a file under `man/man1/apmw.1`. Equivalent to `man apmw` once installed.
+.TP
+\fB\-\-usage\fR
+Print a brief usage summary and exit.
+
+Shows a one\-line synopsis and the most common commands, suitable for quick reference. Use `\-\-help` for the full description.
+.TP
+\fB\-\-json\fR
+Emit output as JSON (machine\-readable)
+.TP
+\fB\-\-color\fR \fI<WHEN>\fR [default: auto]
+Color output: auto, always, never
+.TP
+\fB\-\-human\fR
+Human\-readable output (escape hatch for AXI/TOON mode)
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Increase verbosity (can be repeated: \-v, \-vv)
+.TP
+\fB\-q\fR, \fB\-\-quiet\fR
+Suppress non\-error output
+.TP
+\fB\-\-debug\fR
+Enable debug\-level diagnostics
+.TP
+\fB\-\-dry\-run\fR
+Show what would happen without making changes
+.TP
+\fB\-\-force\fR
+Force the operation, bypassing confirmations
+.TP
+\fB\-\-interactive\fR
+Enable interactive/TUI mode
+.TP
+\fB\-\-no\-pager\fR
+Disable pager output
+.TP
+\fB\-\-no\-scan\fR
+Skip security scanning
+.TP
+\fB\-\-scan\-only\fR
+Only run the security scan, then exit
+.TP
+\fB\-\-on\-risk\fR \fI<ACTION>\fR
+Action to take when a security scan detects risk
+.TP
+\fB\-\-update\-security\-db\fR
+Update the security vulnerability database before scanning
+.TP
+\fB\-\-fields\fR \fI<LIST>\fR
+Comma\-separated list of fields to include in AXI minimal output
+.TP
+\fB\-\-full\fR
+Show full content (escape hatch for AXI truncation)
+.TP
+\fB\-\-daemon\fR
+Run in daemon mode (long\-running background process)
+.TP
+\fB\-\-no\-daemon\fR
+Disable daemon mode (force synchronous operation)
+.TP
+\fB\-\-list\-jobs\fR
+List background jobs
+.TP
+\fB\-\-cancel\-job\fR \fI<ID>\fR
+Cancel a background job by ID
+.TP
+\fB\-\-manager\fR \fI<NAME>\fR
+Override auto\-detection and force a specific package manager.
+
+When set, detection is skipped entirely and the specified manager is used. Valid values cover all supported package managers across ecosystems. See `\-\-help` for the full list.
+.TP
+\fB\-\-no\-telemetry\fR
+Disable telemetry collection for this invocation
+.TP
+\fB\-\-telemetry\-preview\fR
+Print the telemetry payload that would be sent without actually sending it
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help (see a summary with \*(Aq\-h\*(Aq)
+.TP
+\fB\-V\fR, \fB\-\-version\fR
+Print version
+.SH SUBCOMMANDS
+.TP
+apmw\-install(1)
+Install a package or tool
+.TP
+apmw\-detect(1)
+Detect the package manager for the current project
+.TP
+apmw\-status(1)
+Show apmw status and audit log
+.TP
+apmw\-clone(1)
+Create a historyless clone of a repository with AST indexing
+.TP
+apmw\-scan(1)
+Scan a package (or the current project) for security issues
+.TP
+apmw\-suggest(1)
+Suggest within\-ecosystem alternatives for a package
+.TP
+apmw\-info(1)
+Show detailed info about a package
+.TP
+apmw\-audit\-log(1)
+Show the audit log of past operations
+.TP
+apmw\-config(1)
+View or initialize apmw configuration
+.TP
+apmw\-governance(1)
+Manage governance rules (refresh the spec, show current rules)
+.TP
+apmw\-intercept(1)
+Intercept a package manager call (invoked by PATH shims)
+.TP
+apmw\-mcp(1)
+Start the MCP (Model Context Protocol) server over stdio
+.TP
+apmw\-help(1)
+Print this message or the help of the given subcommand(s)
+.SH VERSION
+v0.1.0
+

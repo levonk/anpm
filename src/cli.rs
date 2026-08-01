@@ -303,6 +303,20 @@ pub struct Cli {
   #[arg(long, value_name = "SHELL", requires = "install")]
   pub shell: Option<Shell>,
 
+  /// Print the man page to stdout (groff/troff format) and exit.
+  ///
+  /// The output can be piped to `man -l -` or saved to a file under
+  /// `man/man1/apmw.1`. Equivalent to `man apmw` once installed.
+  #[arg(long, exclusive = true)]
+  pub man: bool,
+
+  /// Print a brief usage summary and exit.
+  ///
+  /// Shows a one-line synopsis and the most common commands, suitable for
+  /// quick reference. Use `--help` for the full description.
+  #[arg(long, exclusive = true)]
+  pub usage: bool,
+
   /// Global flags shared across all subcommands.
   #[command(flatten)]
   pub global: GlobalArgs,
@@ -681,6 +695,30 @@ mod tests {
   fn test_parse_install_flag() {
     let cli = Cli::try_parse_from(["apmw", "--install"]).unwrap();
     assert!(cli.install);
+  }
+
+  #[test]
+  fn test_parse_man_flag() {
+    let cli = Cli::try_parse_from(["apmw", "--man"]).unwrap();
+    assert!(cli.man);
+  }
+
+  #[test]
+  fn test_parse_usage_flag() {
+    let cli = Cli::try_parse_from(["apmw", "--usage"]).unwrap();
+    assert!(cli.usage);
+  }
+
+  #[test]
+  fn test_parse_man_flag_default_false() {
+    let cli = Cli::try_parse_from(["apmw", "status"]).unwrap();
+    assert!(!cli.man);
+  }
+
+  #[test]
+  fn test_parse_usage_flag_default_false() {
+    let cli = Cli::try_parse_from(["apmw", "status"]).unwrap();
+    assert!(!cli.usage);
   }
 
   #[test]
