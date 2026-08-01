@@ -375,6 +375,9 @@ impl<R: RunnerResolver, C: RegistryClient> OnUseEngine<R, C> {
     // Step 8: Record telemetry.
     self.record_telemetry(&result, &manager, start);
 
+    // Step 9: Docs notification — tell the AI agent where to find docs.
+    self.notify_docs(&result);
+
     Ok(result)
   }
 
@@ -470,6 +473,39 @@ impl<R: RunnerResolver, C: RegistryClient> OnUseEngine<R, C> {
     // Telemetry is recorded by the caller (main.rs) which has access to the
     // TelemetryCollector. This method is a placeholder for future integration.
     let _ = (result, manager, start);
+  }
+
+  /// Step 9: Emit a docs notification for the AI agent.
+  ///
+  /// After a successful add, notify the AI agent where to find the package's
+  /// documentation (docs URL + local README path). This is a best-effort
+  /// operation — failures are logged but do not affect the add result.
+  fn notify_docs(&self, result: &AddResult) {
+    // Only notify on successful adds (not dry-runs, skips, or aborts).
+    if !crate::agent::should_notify(&result.status) {
+      return;
+    }
+    // Use the project dir from the detection step. Since we don't store it,
+    // we use the current directory as a best-effort fallback.
+    let project_dir = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
+    match crate::agent::run_docs_notification(
+      &project_dir,
+      &result.package,
+      &result.manager,
+      &result.canonical_manager,
+      result.version.as_deref(),
+      &result.status,
+    ) {
+      Ok(Some(notification)) => {
+        info!(notification = %notification, "docs notification ready");
+      }
+      Ok(None) => {
+        // Notification skipped (e.g. dry-run) — no action needed.
+      }
+      Err(e) => {
+        warn!(error = %e, "failed to build docs notification");
+      }
+    }
   }
 }
 
