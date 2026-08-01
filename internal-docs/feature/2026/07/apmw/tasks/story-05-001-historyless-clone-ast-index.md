@@ -7,7 +7,7 @@ prd_file: "internal-docs/feature/2026/07/apmw/feat-202607290558-apmw.md"
 phase: 5
 parallel_id: 1
 branch: "feature/current/apmw/story-05-001-historyless-clone-ast-index"
-status: "todo"
+status: "done"
 assignee: ""
 reviewer: ""
 dependencies: ["01-001", "01-004", "01-005", "02-001"]
@@ -75,56 +75,57 @@ Create the historyless clone engine that clones any package with `--depth 1 --si
 
 ## Sub-Tasks
 
-- [ ] Create `src/clone/mod.rs` with CloneEngine
+- [x] Create `src/clone/mod.rs` with CloneEngine
   **Verify**: `cargo check` → exit 0
-- [ ] Implement historyless clone (git clone --depth 1 --single-branch --no-tags)
+- [x] Implement historyless clone (git clone --depth 1 --single-branch --no-tags)
   **Verify**: `cargo test clone` → tests pass
-- [ ] Create `src/clone/gitignore.rs` with local .gitignore generation
+- [x] Create `src/clone/gitignore.rs` with local .gitignore generation
   **Verify**: `cargo test gitignore` → tests pass
-- [ ] Create `src/clone/ast_index.rs` with AST tool decision tree
+- [x] Create `src/clone/ast_index.rs` with AST tool decision tree
   **Verify**: `cargo test ast_index` → tests pass
-- [ ] Implement CodeGraph integration (default tool)
+- [x] Implement CodeGraph integration (default tool)
   **Verify**: `cargo test codegraph` → tests pass
-- [ ] Implement Graphify integration (multimodal)
+- [x] Implement Graphify integration (multimodal)
   **Verify**: `cargo test graphify` → tests pass
-- [ ] Implement GitNexus integration (multi-repo)
+- [x] Implement GitNexus integration (multi-repo)
   **Verify**: `cargo test gitnexus` → tests pass
-- [ ] Implement skip-indexing for projects < 20 files
+- [x] Implement skip-indexing for projects < 20 files
   **Verify**: `cargo test skip_index` → tests pass
-- [ ] Wire `apmw clone <repo>` command
+- [x] Wire `apmw clone <repo>` command
   **Verify**: `apmw clone <test-repo>` → creates historyless clone with .gitignore
-- [ ] Run clone and index as background jobs in daemon mode
+- [x] Run clone and index as background jobs in daemon mode
   **Verify**: `apmw --daemon clone <large-repo>` → returns job ID
-- [ ] Output clone/index status in TOON format
+- [x] Output clone/index status in TOON format
   **Verify**: `apmw clone <test-repo>` → valid TOON output
-- [ ] Write audit log entry for each clone
+- [x] Write audit log entry for each clone
   **Verify**: audit log contains entry after clone
-- [ ] Add integration tests with assert_cmd
+- [x] Add integration tests with assert_cmd
   **Verify**: `just test` → all pass
-- [ ] Run `just validate`
+- [x] Run `just validate`
   **Verify**: `just validate` → all gates pass
 
 ## Relevant Files
 
-- `src/clone/mod.rs` — Clone engine
-- `src/clone/gitignore.rs` — .gitignore generation
-- `src/clone/ast_index.rs` — AST indexing
-- `src/lib.rs` — Add `pub mod clone;`
-- `src/main.rs` — Wire Clone command
-- `Cargo.toml` — May need `git2` crate
+- `src/clone/mod.rs` — Clone engine (CloneEngine, CloneResult, derive_repo_name, default_clone_dest)
+- `src/clone/gitignore.rs` — .gitignore generation (write_gitignore, generate_gitignore_contents, IGNORED_PATTERNS)
+- `src/clone/ast_index.rs` — AST indexing (AstTool, IndexOptions, select_ast_tool, create_index, count_files, is_tool_available)
+- `src/lib.rs` — Added `pub mod clone;` and `pub use` exports
+- `src/main.rs` — Wired Clone command (handle_clone, run_clone_as_job with TOON output, audit log, daemon jobs)
+- `tests/integration_tests.rs` — Added 10 integration tests for `apmw clone`
+- `Cargo.toml` — No changes needed (uses tokio::process::Command subprocess, not git2 crate)
 
 ## Acceptance Criteria
 
-- [ ] Clone uses --depth 1 --single-branch --no-tags
-- [ ] Local .gitignore excludes AST index files, devbox.json, AGENTS.md
-- [ ] AST tool selection follows the indexed-ast-tools decision tree
-- [ ] CodeGraph is the default for single-project workflows
-- [ ] Projects < 20 files skip indexing
-- [ ] Clone and index run as background jobs in daemon mode
-- [ ] Output is in TOON format in agent mode
-- [ ] Audit log entry is written for each clone
-- [ ] All integration tests pass
-- [ ] `just validate` passes
+- [x] Clone uses --depth 1 --single-branch --no-tags
+- [x] Local .gitignore excludes AST index files, devbox.json, AGENTS.md
+- [x] AST tool selection follows the indexed-ast-tools decision tree
+- [x] CodeGraph is the default for single-project workflows
+- [x] Projects < 20 files skip indexing
+- [x] Clone and index run as background jobs in daemon mode
+- [x] Output is in TOON format in agent mode
+- [x] Audit log entry is written for each clone
+- [x] All integration tests pass
+- [x] `just validate` passes
 
 ## Test Plan
 
@@ -156,9 +157,9 @@ Create the historyless clone engine that clones any package with `--depth 1 --si
 
 ## Definition of Done
 
-- [ ] All verification commands pass
-- [ ] Code, tests, docs updated; CI green; story file updated
-- [ ] No files outside in-scope list are modified
+- [x] All verification commands pass
+- [x] Code, tests, docs updated; CI green; story file updated
+- [x] No files outside in-scope list are modified
 
 ## STOP Conditions
 

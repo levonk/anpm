@@ -695,3 +695,227 @@ fn test_install_path_scan_skips() {
     .success()
     .stdout(contains("already"));
 }
+
+// ---------------------------------------------------------------------------
+// Clone (historyless clone engine) integration tests (story 05-001)
+// ---------------------------------------------------------------------------
+
+/// Helper: create a bare git repo in a temp dir that can be cloned.
+fn make_cloneable_repo() -> TempDir {
+  let dir = TempDir::new().expect("failed to create temp dir");
+  std::process::Command::new("git")
+    .args(["init"])
+    .current_dir(dir.path())
+    .output()
+    .expect("git init");
+  std::process::Command::new("git")
+    .args(["config", "user.email", "test@test.com"])
+    .current_dir(dir.path())
+    .output()
+    .expect("git config");
+  std::process::Command::new("git")
+    .args(["config", "user.name", "Test"])
+    .current_dir(dir.path())
+    .output()
+    .expect("git config");
+  fs::write(dir.path().join("README.md"), "# test repo").expect("write readme");
+  std::process::Command::new("git")
+    .args(["add", "."])
+    .current_dir(dir.path())
+    .output()
+    .expect("git add");
+  std::process::Command::new("git")
+    .args(["commit", "-m", "initial commit"])
+    .current_dir(dir.path())
+    .output()
+    .expect("git commit");
+  dir
+}
+
+#[test]
+fn test_clone_help_shows_subcommand() {
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .arg("clone")
+    .arg("--help")
+    .assert()
+    .success()
+    .stdout(contains("Repository URL or package name to clone"));
+}
+
+#[test]
+fn test_clone_no_daemon_errors() {
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .arg("--no-daemon")
+    .arg("clone")
+    .arg("https://example.com/repo")
+    .assert()
+    .failure()
+    .stderr(contains("--no-daemon"));
+}
+
+#[test]
+fn test_clone_invalid_repo_fails() {
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .arg("clone")
+    .arg("https://invalid-host-nonexistent-xyz.invalid/repo")
+    .assert()
+    .failure();
+}
+
+#[test]
+fn test_clone_local_repo_succeeds() {
+  let source = make_cloneable_repo();
+  let dest = TempDir::new().expect("failed to create dest dir");
+  let source_url = format!("file://{}", source.path().display());
+
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .env("XDG_CACHE_HOME", dest.path())
+    .arg("clone")
+    .arg(&source_url)
+    .assert()
+    .success()
+    .stdout(contains("\"repo\""))
+    .stdout(contains("\"ast_tool\""));
+}
+
+#[test]
+fn test_clone_writes_gitignore() {
+  let source = make_cloneable_repo();
+  let dest = TempDir::new().expect("failed to create dest dir");
+  let source_url = format!("file://{}", source.path().display());
+
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .env("XDG_CACHE_HOME", dest.path())
+    .arg("clone")
+    .arg(&source_url)
+    .assert()
+    .success();
+
+  // The .gitignore should be in the cloned repo directory. The repo name
+  // is derived from the source path's last segment.
+  let clones_dir = dest.path().join("apmw").join("clones");
+  let entries: Vec<_> = fs::read_dir(&clones_dir)
+    .expect("clones dir should exist")
+    .flatten()
+    .collect();
+  assert!(
+    !entries.is_empty(),
+    "clones dir should have at least one entry"
+  );
+  let cloned_dir = entries[0].path();
+  let gitignore = cloned_dir.join(".gitignore");
+  assert!(gitignore.exists(), ".gitignore should exist after clone");
+  let contents = fs::read_to_string(&gitignore).expect("read gitignore");
+  assert!(contents.contains("devbox.json"));
+  assert!(contents.contains("AGENTS.md"));
+  assert!(contents.contains("*.codegraph"));
+}
+
+#[test]
+fn test_clone_outputs_toon_format() {
+  let source = make_cloneable_repo();
+  let dest = TempDir::new().expect("failed to create dest dir");
+  let source_url = format!("file://{}", source.path().display());
+
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  let output = cmd
+    .env("XDG_CACHE_HOME", dest.path())
+    .arg("clone")
+    .arg(&source_url)
+    .assert()
+    .success()
+    .get_output()
+    .clone();
+  let stdout = String::from_utf8_lossy(&output.stdout);
+  // TOON format uses = instead of : and no commas.
+  assert!(stdout.contains("\"item\""), "stdout: {stdout}");
+  assert!(stdout.contains("\"help\""), "stdout: {stdout}");
+}
+
+#[test]
+fn test_clone_outputs_json_format() {
+  let source = make_cloneable_repo();
+  let dest = TempDir::new().expect("failed to create dest dir");
+  let source_url = format!("file://{}", source.path().display());
+
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .env("XDG_CACHE_HOME", dest.path())
+    .arg("--json")
+    .arg("clone")
+    .arg(&source_url)
+    .assert()
+    .success()
+    .stdout(contains("\"item\""))
+    .stdout(contains("\"ast_tool\""));
+}
+
+#[test]
+fn test_clone_small_repo_skips_indexing() {
+  let source = make_cloneable_repo();
+  let dest = TempDir::new().expect("failed to create dest dir");
+  let source_url = format!("file://{}", source.path().display());
+
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .env("XDG_CACHE_HOME", dest.path())
+    .arg("--json")
+    .arg("clone")
+    .arg(&source_url)
+    .assert()
+    .success()
+    .stdout(contains("\"ast_tool\""))
+    .stdout(contains("skip"));
+}
+
+#[test]
+fn test_clone_creates_shallow_clone() {
+  let source = make_cloneable_repo();
+  // Add a second commit.
+  fs::write(source.path().join("second.txt"), "second").expect("write");
+  std::process::Command::new("git")
+    .args(["add", "."])
+    .current_dir(source.path())
+    .output()
+    .expect("git add");
+  std::process::Command::new("git")
+    .args(["commit", "-m", "second"])
+    .current_dir(source.path())
+    .output()
+    .expect("git commit");
+
+  let dest = TempDir::new().expect("failed to create dest dir");
+  let source_url = format!("file://{}", source.path().display());
+
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .env("XDG_CACHE_HOME", dest.path())
+    .arg("clone")
+    .arg(&source_url)
+    .assert()
+    .success();
+
+  // Verify the clone is shallow (depth 1).
+  let clones_dir = dest.path().join("apmw").join("clones");
+  let entries: Vec<_> = fs::read_dir(&clones_dir)
+    .expect("clones dir should exist")
+    .flatten()
+    .collect();
+  let cloned_dir = entries[0].path();
+  let log_output = std::process::Command::new("git")
+    .args(["log", "--oneline"])
+    .current_dir(&cloned_dir)
+    .output()
+    .expect("git log");
+  let log_str = String::from_utf8_lossy(&log_output.stdout);
+  let commit_count = log_str.lines().filter(|l| !l.is_empty()).count();
+  assert_eq!(
+    commit_count, 1,
+    "shallow clone should have exactly 1 commit"
+  );
+}

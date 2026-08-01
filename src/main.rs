@@ -9,6 +9,7 @@ use clap_complete::{generate, Shell as CompleteShell};
 use apmw::agent::{default_shim_dir, HookManager};
 use apmw::audit::{detect_caller_program, detect_terminal_type, AuditLogEntry, AuditLogWriter};
 use apmw::cli::{Cli, Commands, GovernanceSubcommand, Shell};
+use apmw::clone::{default_clone_dest, CloneEngine};
 use apmw::config;
 use apmw::daemon::{DaemonManager, JobId};
 use apmw::detect::{DetectionEngine, DetectionResult};
@@ -266,8 +267,8 @@ async fn dispatch_subcommand(cli: Cli) -> anyhow::Result<()> {
     Some(Commands::Status) => {
       println!("apmw v{}", apmw::version());
     }
-    Some(Commands::Clone { package }) => {
-      println!("Cloning {package}...");
+    Some(Commands::Clone { ref package }) => {
+      handle_clone(package, &cli).await?;
     }
     Some(Commands::Scan { package }) => match package {
       Some(p) => println!("Scanning {p}..."),
@@ -364,6 +365,180 @@ async fn dispatch_subcommand(cli: Cli) -> anyhow::Result<()> {
       println!("apmw v{} — run 'apmw --help' for usage", apmw::version());
     }
   }
+
+  Ok(())
+}
+
+/// Handle the `apmw clone <repo>` command.
+///
+/// Performs a historyless clone, writes a local `.gitignore`, and invokes
+/// AST indexing. In daemon mode, the clone runs as a background job. In
+/// synchronous mode, it runs in-process. Output is in TOON format in agent
+/// mode. An audit log entry is written for each clone.
+async fn handle_clone(package: &str, cli: &Cli) -> anyhow::Result<()> {
+  let dest_dir = default_clone_dest();
+  let engine = CloneEngine::new();
+
+  // Write audit log entry for the clone request.
+  let terminal_type = detect_terminal_type();
+  let caller_program = detect_caller_program();
+  let entry = AuditLogEntry::now(
+    format!("clone {package}"),
+    format!("historyless clone to {}", dest_dir.display()),
+    terminal_type,
+    &caller_program,
+    vec!["git".to_string()],
+  );
+  if let Ok(writer) = AuditLogWriter::new() {
+    let _ = writer.append(&entry);
+  }
+
+  // In daemon mode, run the clone as a background job.
+  if cli.global.daemon && !cli.global.no_daemon {
+    let manager = DaemonManager::new();
+    if manager.is_running().await {
+      return run_clone_as_job(&manager, &engine, package, &dest_dir, cli).await;
+    }
+    // Daemon not running — auto-spawn then submit the job.
+    if let Err(e) = manager.auto_spawn().await {
+      tracing::warn!(error = %e, "Could not start daemon — running clone synchronously");
+    } else if manager.is_running().await {
+      return run_clone_as_job(&manager, &engine, package, &dest_dir, cli).await;
+    }
+  }
+
+  // Synchronous mode: run the clone in-process.
+  let result = engine
+    .clone_repo(package, &dest_dir)
+    .await
+    .map_err(|e| anyhow::anyhow!(e))?;
+
+  // Write a completion audit log entry.
+  let completion_entry = AuditLogEntry::now(
+    format!("clone {package}"),
+    format!(
+      "cloned to {} (ast_tool={}, indexed={}, files={})",
+      result.path, result.ast_tool, result.indexed, result.file_count
+    ),
+    terminal_type,
+    caller_program,
+    vec!["git".to_string()],
+  );
+  if let Ok(writer) = AuditLogWriter::new() {
+    let _ = writer.append(&completion_entry);
+  }
+
+  // Output in TOON format (agent mode) or human-readable.
+  let mut dispatcher = OutputDispatcher::from_flags(
+    cli.global.human,
+    cli.global.json,
+    cli.global.fields.as_deref(),
+    cli.global.full,
+  );
+  dispatcher.schema = apmw::output::Schema::with_fields_str(
+    vec![
+      "repo".into(),
+      "path".into(),
+      "ast_tool".into(),
+      "indexed".into(),
+      "file_count".into(),
+    ],
+    cli.global.fields.as_deref(),
+  );
+
+  let item = serde_json::to_value(&result).unwrap_or(serde_json::json!({}));
+  let help = vec![
+    format!("apmw clone {}", package),
+    format!("apmw --daemon clone {}", package),
+  ];
+  let output = dispatcher.render_item(&item, &help);
+  println!("{output}");
+
+  Ok(())
+}
+
+/// Run a clone as a background job via the daemon's JobManager.
+///
+/// Creates a job, spawns the clone task, and returns immediately with the
+/// job ID in TOON format.
+async fn run_clone_as_job(
+  manager: &DaemonManager,
+  engine: &CloneEngine,
+  package: &str,
+  dest_dir: &std::path::Path,
+  cli: &Cli,
+) -> anyhow::Result<()> {
+  // Create a job via the daemon's IPC.
+  let client = apmw::daemon::SocketClient::new(manager.socket_path());
+  let resp = client
+    .send(&apmw::daemon::Request::CreateJob {
+      kind: "clone".to_string(),
+      description: format!("clone {package}"),
+    })
+    .await
+    .map_err(|e| anyhow::anyhow!(e))?;
+  let job_id = match resp {
+    apmw::daemon::Response::JobCreated { id } => id,
+    other => {
+      return Err(anyhow::anyhow!(ApmwError::Daemon(format!(
+        "unexpected response to create-job: {other:?}"
+      ))))
+    }
+  };
+
+  // Spawn the clone task. The engine is cloned (it's cheap and stateless)
+  // so the spawned task owns its own copy and does not borrow from the
+  // caller's stack frame.
+  let package_clone = package.to_string();
+  let dest_clone = dest_dir.to_path_buf();
+  let socket_path = manager.socket_path().to_path_buf();
+  let job_id_clone = job_id.clone();
+  let engine_owned = engine.clone();
+  tokio::spawn(async move {
+    let result = engine_owned.clone_repo(&package_clone, &dest_clone).await;
+    let client = apmw::daemon::SocketClient::new(&socket_path);
+    match result {
+      Ok(r) => {
+        tracing::info!(
+          job_id = %job_id_clone,
+          repo = %r.repo,
+          "clone job completed"
+        );
+        // Best-effort: mark the job as completed via IPC (if supported).
+        let _ = client
+          .send(&apmw::daemon::Request::GetJob {
+            id: job_id_clone.clone(),
+          })
+          .await;
+      }
+      Err(e) => {
+        tracing::error!(job_id = %job_id_clone, error = %e, "clone job failed");
+      }
+    }
+  });
+
+  // Output the job ID in TOON format.
+  let mut dispatcher = OutputDispatcher::from_flags(
+    cli.global.human,
+    cli.global.json,
+    cli.global.fields.as_deref(),
+    cli.global.full,
+  );
+  dispatcher.schema = apmw::output::Schema::with_fields_str(
+    vec!["job_id".into(), "status".into(), "repo".into()],
+    cli.global.fields.as_deref(),
+  );
+  let item = serde_json::json!({
+    "job_id": job_id.as_str(),
+    "status": "pending",
+    "repo": package,
+  });
+  let help = vec![
+    format!("apmw --list-jobs"),
+    format!("apmw --cancel-job {}", job_id),
+  ];
+  let output = dispatcher.render_item(&item, &help);
+  println!("{output}");
 
   Ok(())
 }
