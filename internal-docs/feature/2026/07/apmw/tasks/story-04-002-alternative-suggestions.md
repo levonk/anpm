@@ -54,32 +54,34 @@ Create the alternative suggestions engine that suggests better alternatives for 
 
 ## Sub-Tasks
 
-- [ ] Create `src/install/suggest.rs` with SuggestEngine
+- [x] Create `src/install/suggest.rs` with SuggestEngine
   **Verify**: `cargo check` → exit 0
-- [ ] Implement suggest function (source manager -> canonical alternative + reason)
+- [x] Implement suggest function (source manager -> canonical alternative + reason)
   **Verify**: `cargo test suggest` → tests pass
-- [ ] Implement offer-to-use logic (prompt in human mode, help[] in agent mode)
+- [x] Implement offer-to-use logic (prompt in human mode, help[] in agent mode)
   **Verify**: `cargo test offer` → tests pass
-- [ ] Wire suggestions into install flow
+- [x] Wire suggestions into install flow
   **Verify**: `cargo test suggest_integration` → tests pass
-- [ ] Add unit tests for all suggestion pairs
+- [x] Add unit tests for all suggestion pairs
   **Verify**: `just test` → all pass
-- [ ] Run `just validate`
+- [x] Run `just validate`
   **Verify**: `just validate` → all gates pass
 
 ## Relevant Files
 
-- `src/install/suggest.rs` — Alternative suggestions engine
-- `src/install/mod.rs` — Wire suggestions into install flow
+- `src/install/suggest.rs` — Alternative suggestions engine (SuggestEngine, Suggestion, OfferResult)
+- `src/install/mod.rs` — Wire suggestions into install flow (module declaration + re-exports)
+- `src/install/on_use.rs` — Wired SuggestEngine into OnUseEngine; added `suggestion` field to AddResult
+- `src/lib.rs` — Added pub use exports for SuggestEngine, Suggestion, OfferResult
 
 ## Acceptance Criteria
 
-- [ ] Suggestions are produced for all non-canonical managers
-- [ ] Suggestions include the canonical alternative and a reason
-- [ ] In human mode, the user is prompted to use the canonical alternative
-- [ ] In agent mode, the suggestion appears in the help[] array
-- [ ] All unit tests pass
-- [ ] `just validate` passes
+- [x] Suggestions are produced for all non-canonical managers
+- [x] Suggestions include the canonical alternative and a reason
+- [x] In human mode, the user is prompted to use the canonical alternative
+- [x] In agent mode, the suggestion appears in the help[] array
+- [x] All unit tests pass
+- [x] `just validate` passes
 
 ## Test Plan
 
@@ -106,9 +108,9 @@ Create the alternative suggestions engine that suggests better alternatives for 
 
 ## Definition of Done
 
-- [ ] All verification commands pass
-- [ ] Code, tests, docs updated; CI green; story file updated
-- [ ] No files outside in-scope list are modified
+- [x] All verification commands pass
+- [x] Code, tests, docs updated; CI green; story file updated
+- [x] No files outside in-scope list are modified
 
 ## STOP Conditions
 

@@ -44,8 +44,8 @@ pub use governance::{
 };
 pub use install::{
   dev_add_command, dev_flags, supports_dev, AddEngine, AddEngineConfig, AddResult, AddStatus,
-  DefaultRunnerResolver, MockRunnerResolver, OnUseConfig, OnUseEngine, RoutingDecision, Runner,
-  RunnerResolver,
+  DefaultRunnerResolver, MockRunnerResolver, OfferResult, OnUseConfig, OnUseEngine,
+  RoutingDecision, Runner, RunnerResolver, SuggestEngine, Suggestion,
 };
 pub use output::{AgentFormat, OutputDispatcher, OutputMode, Schema, TruncationConfig};
 pub use path_scan::{PathScanner, ScanConfig, ScanResult, ScanSource};
