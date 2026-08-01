@@ -44,6 +44,16 @@ fn main() -> anyhow::Result<()> {
     });
   }
 
+  // mcp: start the MCP server over stdio (needs a tokio runtime).
+  if let Some(Commands::Mcp) = cli.command {
+    let rt = tokio::runtime::Runtime::new()?;
+    return rt.block_on(async {
+      apmw::agent::run_stdio_server()
+        .await
+        .map_err(|e| anyhow::anyhow!(e))
+    });
+  }
+
   // The remaining daemon-related flags (--list-jobs, --cancel-job) and
   // subcommands that may need the daemon are handled in an async runtime.
   let rt = tokio::runtime::Runtime::new()?;
@@ -360,6 +370,14 @@ async fn dispatch_subcommand(cli: Cli) -> anyhow::Result<()> {
           return Err(anyhow::anyhow!(e));
         }
       }
+    }
+    // The Mcp subcommand is handled directly in main() before async_main
+    // is called, so this arm should never be reached. It exists to keep the
+    // match exhaustive.
+    Some(Commands::Mcp) => {
+      return Err(anyhow::anyhow!(ApmwError::McpError(
+        "mcp subcommand should have been handled earlier".to_string()
+      )));
     }
     None => {
       println!("apmw v{} — run 'apmw --help' for usage", apmw::version());
