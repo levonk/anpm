@@ -919,3 +919,66 @@ fn test_clone_creates_shallow_clone() {
     "shallow clone should have exactly 1 commit"
   );
 }
+
+#[test]
+fn test_usage_flag() {
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .arg("--usage")
+    .assert()
+    .success()
+    .stdout(contains("USAGE:"))
+    .stdout(contains("COMMANDS:"))
+    .stdout(contains("install <package>"))
+    .stdout(contains("detect"))
+    .stdout(contains("--help"));
+}
+
+#[test]
+fn test_man_flag() {
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .arg("--man")
+    .assert()
+    .success()
+    // groff/troff man page format markers
+    .stdout(contains(".TH apmw"))
+    .stdout(contains(".SH NAME"))
+    .stdout(contains(".SH SYNOPSIS"))
+    .stdout(contains("All Package Manager Wrapper"));
+}
+
+#[test]
+fn test_no_pager_flag_with_status() {
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .arg("--no-pager")
+    .arg("status")
+    .assert()
+    .success()
+    .stdout(contains("apmw"));
+}
+
+#[test]
+fn test_help_lists_all_commands() {
+  let mut cmd = Command::cargo_bin("apmw").unwrap();
+  cmd
+    .arg("--help")
+    .assert()
+    .success()
+    .stdout(contains("install"))
+    .stdout(contains("detect"))
+    .stdout(contains("status"))
+    .stdout(contains("clone"))
+    .stdout(contains("scan"))
+    .stdout(contains("suggest"))
+    .stdout(contains("info"))
+    .stdout(contains("audit-log"))
+    .stdout(contains("config"))
+    .stdout(contains("governance"))
+    .stdout(contains("intercept"))
+    .stdout(contains("mcp"))
+    .stdout(contains("--man"))
+    .stdout(contains("--usage"))
+    .stdout(contains("--no-pager"));
+}

@@ -5,6 +5,7 @@
 
 use clap::{CommandFactory, Parser};
 use clap_complete::{generate, Shell as CompleteShell};
+use clap_mangen::Man;
 
 use apmw::agent::{default_shim_dir, HookManager};
 use apmw::audit::{detect_caller_program, detect_terminal_type, AuditLogEntry, AuditLogWriter};
@@ -20,6 +21,20 @@ use apmw::path_scan::PathScanner;
 
 fn main() -> anyhow::Result<()> {
   let cli = Cli::parse();
+
+  // --man: print the man page (groff/troff) to stdout and exit.
+  if cli.man {
+    let cmd = Cli::command();
+    let man = Man::new(cmd);
+    man.render(&mut std::io::stdout())?;
+    return Ok(());
+  }
+
+  // --usage: print a brief usage summary and exit.
+  if cli.usage {
+    print_brief_usage();
+    return Ok(());
+  }
 
   if cli.install {
     if cli.intercept {
@@ -559,6 +574,58 @@ async fn run_clone_as_job(
   println!("{output}");
 
   Ok(())
+}
+
+/// Print a brief usage summary to stdout.
+///
+/// This is the `--usage` output: a one-line synopsis followed by the most
+/// common commands and flags. For the full description use `--help`.
+fn print_brief_usage() {
+  println!(
+    "apmw {version} — All Package Manager Wrapper",
+    version = apmw::version()
+  );
+  println!();
+  println!("USAGE:");
+  println!("    apmw [OPTIONS] [COMMAND]");
+  println!();
+  println!("COMMANDS:");
+  println!("    install <package>   Install a package or tool (use --dev for build-time deps)");
+  println!("    detect              Detect the package manager for the current project");
+  println!("    status              Show apmw status");
+  println!("    clone <repo>        Historyless clone with AST indexing");
+  println!("    scan [package]      Scan a package or the current project for security issues");
+  println!("    suggest <package>   Suggest within-ecosystem alternatives");
+  println!("    info <package>      Show detailed info about a package");
+  println!("    audit-log           Show the audit log of past operations");
+  println!("    config              View or initialize configuration");
+  println!("    governance refresh  Refresh the cached governance spec");
+  println!("    intercept <tool>    Intercept a package manager call (used by shims)");
+  println!("    mcp                 Start the MCP server over stdio");
+  println!();
+  println!("COMMON FLAGS:");
+  println!("    --json              Emit JSON (machine-readable) output");
+  println!("    --human             Human-readable output (escape hatch for AXI/TOON)");
+  println!("    --manager <name>    Override auto-detection and force a manager");
+  println!("    --dry-run           Show what would happen without making changes");
+  println!("    --no-scan           Skip security scanning");
+  println!("    --no-pager          Disable pager output");
+  println!("    -v / -vv            Increase verbosity");
+  println!("    -q                  Suppress non-error output");
+  println!("    --daemon            Run in daemon mode (background jobs)");
+  println!("    --no-daemon         Force synchronous operation");
+  println!("    --list-jobs         List background jobs");
+  println!("    --cancel-job <id>   Cancel a background job");
+  println!();
+  println!("INSTALL / SETUP:");
+  println!("    --install [--shell bash|zsh|fish]   Generate completions + init config");
+  println!("    --install --intercept               Install PATH shims (hard intercept)");
+  println!("    --man                               Print the man page to stdout");
+  println!("    --usage                             Show this brief summary");
+  println!("    --help                              Show full help");
+  println!("    --version                           Show version");
+  println!();
+  println!("See `apmw --help` for full details, or `man apmw` for the manual.");
 }
 
 /// Generate shell completions and initialize the config file.

@@ -102,3 +102,19 @@ validate_impl:
 
 validate:
     just _devbox validate_impl
+
+# Documentation assets — generate man pages and shell completions.
+# These run directly (no devbox wrapper) since they only need cargo.
+man:
+    cargo run --example gen-assets -- man
+
+completions:
+    cargo run --example gen-assets -- completions
+
+assets: man completions
+
+man_impl:
+    cargo run --example gen-assets -- man
+
+completions_impl:
+    cargo run --example gen-assets -- completions
