@@ -31,3 +31,6 @@ tarpaulin-report.html
 
 # Logs
 *.log
+
+# Packaging generator output
+packaging/*/dist/
