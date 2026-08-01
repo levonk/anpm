@@ -79,5 +79,5 @@
 
 | Story ID | Title | Phase | Status | Assignee | Parallel-safe | Dependencies | Dependants | Modules | Branch |
 |---|---|---:|---|---|---|---|---|---|---|
-| 07-001 | Multi-ecosystem packaging and release pipeline | 07 | [ ] Todo |  | false | 06-001, 06-002, 06-003 | — | packaging/, .github/workflows/ | feature/current/apmw/story-07-001-multi-ecosystem-release |
-| 07-002 | Documentation finalization (man pages, shell completion, README) | 07 | [ ] Todo |  | true | 06-001, 06-002, 06-003 | — | docs/, README.md | feature/current/apmw/story-07-002-documentation-finalization |
+| 07-001 | Multi-ecosystem packaging and release pipeline | 07 | [~] In-Progress |  | false | 06-001, 06-002, 06-003 | — | packaging/, .github/workflows/ | feature/current/apmw/story-07-001-multi-ecosystem-release |
+| 07-002 | Documentation finalization (man pages, shell completion, README) | 07 | [~] In-Progress |  | true | 06-001, 06-002, 06-003 | — | docs/, README.md | feature/current/apmw/story-07-002-documentation-finalization |
