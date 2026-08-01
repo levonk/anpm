@@ -7,6 +7,7 @@
 pub mod agent;
 pub mod audit;
 pub mod cli;
+pub mod clone;
 pub mod config;
 pub mod containers;
 pub mod daemon;
@@ -27,6 +28,11 @@ pub use agent::{
 };
 pub use audit::{AuditLogEntry, AuditLogWriter, TerminalType};
 pub use cli::{Cli, Commands};
+pub use clone::{
+  count_files, create_index, default_clone_dest, derive_repo_name, generate_gitignore_contents,
+  is_tool_available, select_ast_tool, write_gitignore, AstTool, CloneEngine, CloneResult,
+  IndexOptions, CLONE_FLAGS, GITIGNORE_HEADER, IGNORED_PATTERNS,
+};
 pub use config::ApmwConfig;
 pub use containers::{
   detect_container_usage, list_images, pull_image, scan_image, CommandOutput,
