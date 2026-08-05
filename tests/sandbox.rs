@@ -31,5 +31,9 @@ fn sandbox_harness_smoke() {
 
   // sandboxed_command builds a Command (does not execute it). It also
   // exercises ensure_nono_or_skip internally.
-  let (_td_cmd, _cmd) = sandbox::sandboxed_command("sandbox_harness_smoke_cmd");
+  let (td_cmd, _cmd) = sandbox::sandboxed_command("sandbox_harness_smoke_cmd");
+
+  // sandboxed_command_in builds a Command for an existing TempDir (used by
+  // tests that need to write fixtures before invoking apmw).
+  let _cmd_in = sandbox::sandboxed_command_in(&td_cmd, "sandbox_harness_smoke_in");
 }

@@ -132,6 +132,34 @@ pub fn sandbox_tempdir(test_name: &str) -> TempDir {
   }
 }
 
+/// Create a sandboxed [`Command`] for an existing TempDir.
+///
+/// Use this when the test needs to write files into the TempDir before running
+/// the command. The TempDir must have been created via [`sandbox_tempdir`] (or
+/// be a path the nono profile already covers).
+pub fn sandboxed_command_in(tempdir: &TempDir, test_name: &str) -> Command {
+  if !ensure_nono_or_skip() {
+    let mut cmd = Command::cargo_bin("apmw").expect("failed to find apmw binary");
+    cmd.current_dir(tempdir.path());
+    return cmd;
+  }
+  let profile = default_profile(tempdir.path());
+  let profile_path = tempdir.path().join("nono-profile.json");
+  write_profile(&profile, &profile_path)
+    .unwrap_or_else(|e| panic!("failed to write nono profile: {e}"));
+  let apmw_bin = env!("CARGO_BIN_EXE_apmw");
+  let mut cmd = Command::new("nono");
+  cmd
+    .arg("run")
+    .arg("--profile")
+    .arg(&profile_path)
+    .arg("--")
+    .arg(apmw_bin);
+  cmd.current_dir(tempdir.path());
+  let _ = test_name; // reserved for future per-test profile tuning
+  cmd
+}
+
 /// Create a sandboxed [`Command`] that runs apmw through nono.
 ///
 /// Returns `(TempDir, Command)` where the TempDir is the sandboxed working dir
