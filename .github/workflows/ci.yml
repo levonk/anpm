@@ -37,11 +37,15 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         rust: [stable, beta]
+    env:
+      APMW_TEST_SANDBOX_REQUIRED: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: jetify-com/devbox-action@v0.10.0
         with:
           enable-cache: true
+      - name: Install nono sandbox
+        run: curl -fsSL https://nono.sh/install.sh | sh
       - run: devbox run -- just test_impl
 
   build:

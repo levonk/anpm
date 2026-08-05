@@ -58,6 +58,7 @@ doctor:
     command -v just >/dev/null 2>&1 && echo "just: $(just --version 2>&1)" || echo "just: NOT FOUND"
     command -v cargo >/dev/null 2>&1 && echo "cargo: $(cargo --version 2>&1)" || echo "cargo: NOT FOUND"
     command -v rustc >/dev/null 2>&1 && echo "rustc: $(rustc --version 2>&1)" || echo "rustc: NOT FOUND"
+    command -v nono >/dev/null 2>&1 && echo "nono: $(nono --version 2>&1)" || echo "nono: NOT FOUND (install with: brew install nono)"
     [ "${DEVBOX_SHELL_ENABLED:-0}" = "1" ] && echo "devbox env: ACTIVE" || echo "devbox env: NOT ACTIVE"
 
 # Implementation targets (REQUIRED) — hidden from just --list via _ prefix
