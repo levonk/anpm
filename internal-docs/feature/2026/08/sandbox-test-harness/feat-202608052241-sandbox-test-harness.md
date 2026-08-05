@@ -365,3 +365,53 @@
 - **Reviewers should scrutinize**: the nono profile's `fs_read` allowlist —
   every allowed path is a potential leak vector. The `env` allowlist — every
   allowed env var is accessible to the sandboxed process.
+
+## Implementation Status
+
+**Status: COMPLETE** — All 6 stories executed successfully.
+
+| Story | Status | Commit |
+|-------|--------|--------|
+| 01-001 ADR | [x] Done | `005d5f2` |
+| 01-002 Infra | [x] Done | `82feed5` |
+| 01-003 Harness | [x] Done | `e08a09f` |
+| 02-001 Migration | [x] Done | `83ab414` |
+| 03-001 Verification | [x] Done | `4cb62cf` |
+| 03-002 AGENTS.md | [x] Done | `0a636b2` |
+
+### Deviations from Original Plan
+
+1. **devbox.json nono installation**: The original plan (01-002) added `nono`
+   to devbox.json packages, assuming it was in Nixpkgs. The pinned nixpkgs
+   commit did not have nono, breaking `devbox shell`. Fixed by removing nono
+   from packages and adding a `postShellHook` that installs nono via curl if
+   not present (commit `517a307`).
+
+2. **Intercept shim test rewrite**: The plan (02-001) suggested setting
+   `PATH=<tempdir>/bin` to redirect shim installation. However, apmw's
+   `default_shim_dir()` uses `dirs::data_local_dir()` which on macOS is
+   `~/Library/Application Support` and does not respect `PATH` or
+   `XDG_DATA_HOME`. The tests instead override `HOME` to the sandbox TempDir,
+   so shims land at `<tempdir>/Library/Application Support/apmw/shims` (macOS)
+   or `<tempdir>/.local/share/apmw/shims` (Linux) — never the real host.
+
+3. **`sandboxed_command_in()` added to harness**: The original harness (01-003)
+   only had `sandboxed_command()` which creates its own TempDir. Tests that
+   need to write fixture files before running the command required a variant
+   that accepts an existing TempDir. `sandboxed_command_in()` was added during
+   02-001.
+
+4. **Isolation test approach**: The `test_sandbox_denies_home_ssh` test
+   (03-001) uses a separate `TempDir::new()` for the fake home (outside the
+   profile's fs_read allowlist) and removes `/tmp` from the profile's fs_read
+   to ensure the secret path is genuinely denied on both macOS (`/var/folders`)
+   and Linux (`/tmp`).
+
+### Verification Results
+
+- `cargo test`: 1027 passed, 0 failed (62 integration + 2 sandbox + 963 unit/doc)
+- `cargo clippy --all-targets --all-features -- -D warnings`: exit 0
+- `cargo fmt --all -- --check`: clean
+- nono is not installed in the dev environment — tests currently run via the
+  harness fallback (unsandboxed). The sandbox activates automatically once
+  nono is installed. CI enforces the sandbox via `APMW_TEST_SANDBOX_REQUIRED=1`.
