@@ -9,7 +9,6 @@
     "git",
     "eza",
     "fzf",
-    "nono",
     "devbox",
     "github:nixos/nixpkgs/25.05#rustc",
     "github:nixos/nixpkgs/25.05#cargo",
@@ -20,6 +19,7 @@
   ],
   "shell": {
     "init_hook": [
+      "command -v nono >/dev/null 2>&1 || curl -fsSL https://nono.sh/install.sh | sh",
       "just bootstrap_impl"
     ],
     "scripts": {
