@@ -1,0 +1,44 @@
+{
+  "fs_read": [
+    "<TEMPDIR>",
+    "/usr",
+    "/lib",
+    "/lib64",
+    "/etc",
+    "/tmp",
+    "~/.cargo/registry",
+    "~/.local/share/pnpm",
+    "~/.config/pnpm",
+    "~/.rustup"
+  ],
+  "fs_write": [
+    "<TEMPDIR>"
+  ],
+  "net_allow": [
+    "registry.npmjs.org",
+    "crates.io",
+    "static.crates.io",
+    "index.crates.io",
+    "github.com",
+    "raw.githubusercontent.com",
+    "objects.githubusercontent.com"
+  ],
+  "net_deny": [
+    "*"
+  ],
+  "env": [
+    "PATH",
+    "HOME",
+    "USER",
+    "SHELL",
+    "TERM",
+    "LANG",
+    "LC_ALL",
+    "CARGO_HOME",
+    "RUSTUP_HOME",
+    "XDG_CACHE_HOME",
+    "XDG_CONFIG_HOME",
+    "XDG_DATA_HOME",
+    "TMPDIR"
+  ]
+}
