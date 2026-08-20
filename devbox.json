@@ -3,14 +3,23 @@
   "nixpkgs": {
     "commit": "11cb3517b3af6af300dd6c055aeda73c9bf52c48"
   },
-  "packages": [
-    "github:nixos/nixpkgs/25.05#rustc",
-    "github:nixos/nixpkgs/25.05#cargo",
-    "github:nixos/nixpkgs/25.05#clippy",
-    "github:nixos/nixpkgs/25.05#rustfmt",
-    "github:nixos/nixpkgs/25.05#cargo-audit",
-    "github:nixos/nixpkgs/25.05#just"
-  ],
+  "packages": {
+    "difftastic": "",
+    "just": "",
+    "git": "",
+    "eza": "",
+    "fzf": "",
+    "devbox": "",
+    "github:nixos/nixpkgs/25.05#rustc": "",
+    "github:nixos/nixpkgs/25.05#cargo": "",
+    "github:nixos/nixpkgs/25.05#clippy": "",
+    "github:nixos/nixpkgs/25.05#rustfmt": "",
+    "github:nixos/nixpkgs/25.05#cargo-audit": "",
+    "github:nixos/nixpkgs/25.05#just": "",
+    "git-secrets": "",
+    "github:levonk/nono#nono": "",
+    "git-imerge": ""
+  },
   "shell": {
     "init_hook": [
       "just bootstrap_impl"

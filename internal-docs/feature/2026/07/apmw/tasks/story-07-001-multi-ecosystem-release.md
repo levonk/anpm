@@ -7,7 +7,7 @@ prd_file: "internal-docs/feature/2026/07/apmw/feat-202607290558-apmw.md"
 phase: 7
 parallel_id: 1
 branch: "feature/current/apmw/story-07-001-multi-ecosystem-release"
-status: "todo"
+status: "done"
 assignee: ""
 reviewer: ""
 dependencies: ["06-001", "06-002", "06-003"]
@@ -66,47 +66,58 @@ Create the multi-ecosystem packaging and release pipeline that ships apmw as npm
 
 ## Sub-Tasks
 
-- [ ] Create `packaging/` directory structure with generators for each ecosystem
+- [x] Create `packaging/` directory structure with generators for each ecosystem
   **Verify**: `ls packaging/` → all ecosystem dirs present
-- [ ] Create npm/pnpm package generator (wraps pre-built binary)
+- [x] Create npm/pnpm package generator (wraps pre-built binary)
   **Verify**: `packaging/npm/generate.sh` → produces valid package.json
-- [ ] Create PyPI package generator
+- [x] Create PyPI package generator
   **Verify**: `packaging/pypi/generate.sh` → produces valid setup.py/pyproject.toml
-- [ ] Create Homebrew formula generator
+- [x] Create Homebrew formula generator
   **Verify**: `packaging/brew/generate.sh` → produces valid formula
-- [ ] Create Nix derivation generator
+- [x] Create Nix derivation generator
   **Verify**: `packaging/nix/generate.sh` → produces valid default.nix
-- [ ] Create apt/deb package generator
+- [x] Create apt/deb package generator
   **Verify**: `packaging/apt/generate.sh` → produces valid deb
-- [ ] Create winget manifest generator
+- [x] Create winget manifest generator
   **Verify**: `packaging/winget/generate.sh` → produces valid manifest
-- [ ] Create apk package generator
+- [x] Create apk package generator
   **Verify**: `packaging/apk/generate.sh` → produces valid apk
-- [ ] Create rpm package generator
+- [x] Create rpm package generator
   **Verify**: `packaging/rpm/generate.sh` → produces valid rpm
-- [ ] Create GitHub Actions release workflow (multi-target build + package + publish)
+- [x] Create GitHub Actions release workflow (multi-target build + package + publish)
   **Verify**: `.github/workflows/release.yml` → valid workflow
-- [ ] Handle AUR name collision (use apmw-bin)
+- [x] Handle AUR name collision (use apmw-bin)
   **Verify**: `packaging/aur/` → uses apmw-bin name
-- [ ] Add release automation (tag-triggered)
+- [x] Add release automation (tag-triggered)
   **Verify**: Push tag → triggers release workflow
-- [ ] Run `just validate`
+- [x] Run `just validate`
   **Verify**: `just validate` → all gates pass
 
 ## Relevant Files
 
-- `packaging/` — All ecosystem generators
-- `.github/workflows/release.yml` — Release workflow
-- `Dockerfile` — May need updates for multi-target builds
+- `packaging/README.md` — Overview of all ecosystem generators
+- `packaging/metadata.sh` — Shared project metadata and helper functions
+- `packaging/npm/generate.sh` — npm/pnpm package generator (package.json + install.js)
+- `packaging/pypi/generate.sh` — PyPI package generator (pyproject.toml + Python module)
+- `packaging/brew/generate.sh` — Homebrew formula generator (apmw.rb)
+- `packaging/nix/generate.sh` — Nix derivation generator (default.nix + flake.nix)
+- `packaging/devbox/generate.sh` — Devbox package generator (devbox.json)
+- `packaging/apt/generate.sh` — apt source package generator (debian/)
+- `packaging/winget/generate.sh` — Winget manifest generator (YAML manifests)
+- `packaging/apk/generate.sh` — Alpine APK package generator (APKBUILD)
+- `packaging/deb/generate.sh` — Debian .deb binary package generator
+- `packaging/rpm/generate.sh` — RPM spec generator (apmw.spec)
+- `packaging/aur/generate.sh` — AUR package generator (PKGBUILD, uses apmw-bin name)
+- `.github/workflows/release.yml` — Tag-triggered release workflow (multi-target build + package + publish)
 
 ## Acceptance Criteria
 
-- [ ] All 9+ ecosystem package generators produce valid packages
-- [ ] GitHub Actions release workflow builds for multiple targets
-- [ ] Each ecosystem package wraps the pre-built binary
-- [ ] AUR package uses `apmw-bin` name to avoid collision
-- [ ] Release is tag-triggered
-- [ ] `just validate` passes
+- [x] All 9+ ecosystem package generators produce valid packages
+- [x] GitHub Actions release workflow builds for multiple targets
+- [x] Each ecosystem package wraps the pre-built binary
+- [x] AUR package uses `apmw-bin` name to avoid collision
+- [x] Release is tag-triggered
+- [x] `just validate` passes
 
 ## Test Plan
 
@@ -136,9 +147,9 @@ Create the multi-ecosystem packaging and release pipeline that ships apmw as npm
 
 ## Definition of Done
 
-- [ ] All verification commands pass
-- [ ] Code, tests, docs updated; CI green; story file updated
-- [ ] No files outside in-scope list are modified
+- [x] All verification commands pass
+- [x] Code, tests, docs updated; CI green; story file updated
+- [x] No files outside in-scope list are modified
 
 ## STOP Conditions
 

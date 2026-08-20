@@ -173,6 +173,18 @@ Default agent mode per ADR-20260607001 §36-45:
 - Write benchmarks in `benches/` directory
 - Run `just test` to execute all tests
 
+### Sandboxed Testing
+
+Integration tests run inside a [nono](https://nono.sh) process sandbox that
+isolates test subprocesses from the developer's personal files and restricts
+network access to real package registries only.
+
+- **Install nono**: `brew install nono` or `curl -fsSL https://nono.sh/install.sh | sh`
+- **Fallback**: If nono is absent, tests run unsandboxed with a warning (local dev). CI requires the sandbox via `APMW_TEST_SANDBOX_REQUIRED=1`.
+- **Profile**: The nono profile restricts `fs_write` to the test's TempDir, denies reads of personal files (`$HOME/.ssh`, `$HOME/.aws`, etc.), and allows network only to `registry.npmjs.org`, `crates.io`, `github.com`, and related registry domains.
+- **New tests**: Use `sandboxed_command()` or `sandboxed_command_in()` from `tests/sandbox/mod.rs` — never call `Command::cargo_bin("apmw")` directly in integration tests.
+- **Decision record**: See `internal-docs/adr/2026/08/adr-202608052241-test-sandbox-selection.md` for the sandbox tool selection rationale.
+
 ### Security
 
 - Never commit secrets or credentials

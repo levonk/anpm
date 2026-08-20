@@ -5,24 +5,48 @@
 
 use clap::{CommandFactory, Parser};
 use clap_complete::{generate, Shell as CompleteShell};
+use clap_mangen::Man;
 
+use apmw::agent::{default_shim_dir, HookManager};
 use apmw::audit::{detect_caller_program, detect_terminal_type, AuditLogEntry, AuditLogWriter};
-use apmw::cli::{Cli, Commands, Shell};
+use apmw::cli::{Cli, Commands, GovernanceSubcommand, Shell};
+use apmw::clone::{default_clone_dest, CloneEngine};
 use apmw::config;
 use apmw::daemon::{DaemonManager, JobId};
 use apmw::detect::{DetectionEngine, DetectionResult};
 use apmw::error::ApmwError;
+use apmw::governance::{GovernanceEngine, ReqwestSpecClient, SpecLoader};
 use apmw::output::OutputDispatcher;
 use apmw::path_scan::PathScanner;
 
 fn main() -> anyhow::Result<()> {
   let cli = Cli::parse();
 
+  // --man: print the man page (groff/troff) to stdout and exit.
+  if cli.man {
+    let cmd = Cli::command();
+    let man = Man::new(cmd);
+    man.render(&mut std::io::stdout())?;
+    return Ok(());
+  }
+
+  // --usage: print a brief usage summary and exit.
+  if cli.usage {
+    print_brief_usage();
+    return Ok(());
+  }
+
   if cli.install {
+    if cli.intercept {
+      return run_install_intercept();
+    }
     return run_install(cli.shell);
   }
 
   if cli.uninstall {
+    if cli.intercept {
+      return run_uninstall_intercept();
+    }
     return run_uninstall();
   }
 
@@ -32,6 +56,16 @@ fn main() -> anyhow::Result<()> {
     return rt.block_on(async {
       let manager = DaemonManager::new();
       manager.start().await.map_err(|e| anyhow::anyhow!(e))
+    });
+  }
+
+  // mcp: start the MCP server over stdio (needs a tokio runtime).
+  if let Some(Commands::Mcp) = cli.command {
+    let rt = tokio::runtime::Runtime::new()?;
+    return rt.block_on(async {
+      apmw::agent::run_stdio_server()
+        .await
+        .map_err(|e| anyhow::anyhow!(e))
     });
   }
 
@@ -122,11 +156,71 @@ async fn dispatch_subcommand(cli: Cli) -> anyhow::Result<()> {
 
   match cli.command {
     Some(Commands::Install { package, dev }) => {
+      let dir = std::env::current_dir()?;
+      let on_risk = cli
+        .global
+        .on_risk
+        .map(|a| match a {
+          apmw::cli::OnRiskAction::Prompt => apmw::security::OnRiskMode::Prompt,
+          apmw::cli::OnRiskAction::Abort => apmw::security::OnRiskMode::Error,
+          apmw::cli::OnRiskAction::Proceed => apmw::security::OnRiskMode::Warn,
+          apmw::cli::OnRiskAction::Quarantine => apmw::security::OnRiskMode::Skip,
+        })
+        .unwrap_or_default();
+
+      let engine_config = apmw::install::AddEngineConfig {
+        dev,
+        dry_run: cli.global.dry_run,
+        no_scan: cli.global.no_scan,
+        scan_only: cli.global.scan_only,
+        manager_override: cli.global.manager.clone(),
+        version_spec: String::new(),
+        use_devbox: true,
+        on_risk,
+        min_age: apmw::version::MinAgeDaysConfig::default(),
+      };
+
+      let engine = apmw::install::AddEngine::new();
+      let result = engine.run(&package, &dir, &engine_config).await?;
+
+      // Build the output.
+      let mut dispatcher = OutputDispatcher::from_flags(
+        cli.global.human,
+        cli.global.json,
+        cli.global.fields.as_deref(),
+        cli.global.full,
+      );
+      dispatcher.schema = apmw::output::Schema::with_fields_str(
+        vec![
+          "package".into(),
+          "manager".into(),
+          "canonical_manager".into(),
+          "status".into(),
+        ],
+        cli.global.fields.as_deref(),
+      );
+
+      let item = serde_json::to_value(&result).unwrap_or(serde_json::json!({}));
+      let help = vec![
+        format!("apmw install {} --dev", package),
+        format!("apmw install {} --dry-run", package),
+      ];
+      let output = dispatcher.render_item(&item, &help);
+
+      // Print a summary line with "via {manager}" for backward compatibility
+      // with existing integration tests, then the structured output.
       let dev_tag = if dev { " (dev)" } else { "" };
-      match &cli.global.manager {
-        Some(m) => println!("Installing {package}{dev_tag} via {m}..."),
-        None => println!("Installing {package}{dev_tag}..."),
+      let manager_label = if result.manager.is_empty() {
+        result.canonical_manager.clone()
+      } else {
+        result.manager.clone()
+      };
+      if manager_label.is_empty() {
+        println!("Installed {package}{dev_tag}");
+      } else {
+        println!("Installed {package}{dev_tag} via {manager_label}");
       }
+      println!("{output}");
     }
     Some(Commands::Detect) => {
       let dir = std::env::current_dir()?;
@@ -198,8 +292,8 @@ async fn dispatch_subcommand(cli: Cli) -> anyhow::Result<()> {
     Some(Commands::Status) => {
       println!("apmw v{}", apmw::version());
     }
-    Some(Commands::Clone { package }) => {
-      println!("Cloning {package}...");
+    Some(Commands::Clone { ref package }) => {
+      handle_clone(package, &cli).await?;
     }
     Some(Commands::Scan { package }) => match package {
       Some(p) => println!("Scanning {p}..."),
@@ -237,12 +331,301 @@ async fn dispatch_subcommand(cli: Cli) -> anyhow::Result<()> {
         println!("Run 'apmw config --show' to view config or 'apmw config --init' to create it.");
       }
     }
+    Some(Commands::Governance { subcommand }) => match subcommand {
+      GovernanceSubcommand::Refresh => {
+        let loader = SpecLoader::new();
+        let client = ReqwestSpecClient::new();
+        match loader.refresh(&client) {
+          Ok(spec) => {
+            println!("Governance spec refreshed (version: {}).", spec.version);
+            if spec.rules.is_empty() {
+              println!("No governance rules found in spec.");
+            } else {
+              println!("Loaded {} governance rule(s):", spec.rules.len());
+              for rule in &spec.rules {
+                println!("  {} {} — {}", rule.governance_type, rule.tool, {
+                  rule
+                    .message
+                    .clone()
+                    .unwrap_or_else(|| "(no message)".to_string())
+                });
+              }
+            }
+          }
+          Err(e) => {
+            eprintln!("Failed to refresh governance spec: {e}");
+            return Err(anyhow::anyhow!(e));
+          }
+        }
+      }
+    },
+    Some(Commands::Intercept { tool, args }) => {
+      // Invoked by PATH shims. Evaluate governance + security, then print
+      // the effective tool and args for the shim to exec.
+      let engine = GovernanceEngine::default();
+      let mgr = HookManager::new(engine);
+      match mgr.intercept(&tool, &args) {
+        Ok(result) => {
+          if result.decision.run_security_scan {
+            tracing::info!(
+              tool = tool,
+              effective = result.effective_tool.as_str(),
+              "intercepted call requires security scan"
+            );
+          }
+          // Output the effective command so the shim can exec it.
+          // Format: <tool>\0<arg1>\0<arg2>...
+          // The shim reads this and execs the effective tool.
+          let mut parts = vec![result.effective_tool.clone()];
+          parts.extend(result.effective_args.iter().cloned());
+          println!("{}", parts.join("\u{0}"));
+        }
+        Err(e) => {
+          eprintln!("apmw intercept: {e}");
+          return Err(anyhow::anyhow!(e));
+        }
+      }
+    }
+    // The Mcp subcommand is handled directly in main() before async_main
+    // is called, so this arm should never be reached. It exists to keep the
+    // match exhaustive.
+    Some(Commands::Mcp) => {
+      return Err(anyhow::anyhow!(ApmwError::McpError(
+        "mcp subcommand should have been handled earlier".to_string()
+      )));
+    }
     None => {
       println!("apmw v{} — run 'apmw --help' for usage", apmw::version());
     }
   }
 
   Ok(())
+}
+
+/// Handle the `apmw clone <repo>` command.
+///
+/// Performs a historyless clone, writes a local `.gitignore`, and invokes
+/// AST indexing. In daemon mode, the clone runs as a background job. In
+/// synchronous mode, it runs in-process. Output is in TOON format in agent
+/// mode. An audit log entry is written for each clone.
+async fn handle_clone(package: &str, cli: &Cli) -> anyhow::Result<()> {
+  let dest_dir = default_clone_dest();
+  let engine = CloneEngine::new();
+
+  // Write audit log entry for the clone request.
+  let terminal_type = detect_terminal_type();
+  let caller_program = detect_caller_program();
+  let entry = AuditLogEntry::now(
+    format!("clone {package}"),
+    format!("historyless clone to {}", dest_dir.display()),
+    terminal_type,
+    &caller_program,
+    vec!["git".to_string()],
+  );
+  if let Ok(writer) = AuditLogWriter::new() {
+    let _ = writer.append(&entry);
+  }
+
+  // In daemon mode, run the clone as a background job.
+  if cli.global.daemon && !cli.global.no_daemon {
+    let manager = DaemonManager::new();
+    if manager.is_running().await {
+      return run_clone_as_job(&manager, &engine, package, &dest_dir, cli).await;
+    }
+    // Daemon not running — auto-spawn then submit the job.
+    if let Err(e) = manager.auto_spawn().await {
+      tracing::warn!(error = %e, "Could not start daemon — running clone synchronously");
+    } else if manager.is_running().await {
+      return run_clone_as_job(&manager, &engine, package, &dest_dir, cli).await;
+    }
+  }
+
+  // Synchronous mode: run the clone in-process.
+  let result = engine
+    .clone_repo(package, &dest_dir)
+    .await
+    .map_err(|e| anyhow::anyhow!(e))?;
+
+  // Write a completion audit log entry.
+  let completion_entry = AuditLogEntry::now(
+    format!("clone {package}"),
+    format!(
+      "cloned to {} (ast_tool={}, indexed={}, files={})",
+      result.path, result.ast_tool, result.indexed, result.file_count
+    ),
+    terminal_type,
+    caller_program,
+    vec!["git".to_string()],
+  );
+  if let Ok(writer) = AuditLogWriter::new() {
+    let _ = writer.append(&completion_entry);
+  }
+
+  // Output in TOON format (agent mode) or human-readable.
+  let mut dispatcher = OutputDispatcher::from_flags(
+    cli.global.human,
+    cli.global.json,
+    cli.global.fields.as_deref(),
+    cli.global.full,
+  );
+  dispatcher.schema = apmw::output::Schema::with_fields_str(
+    vec![
+      "repo".into(),
+      "path".into(),
+      "ast_tool".into(),
+      "indexed".into(),
+      "file_count".into(),
+    ],
+    cli.global.fields.as_deref(),
+  );
+
+  let item = serde_json::to_value(&result).unwrap_or(serde_json::json!({}));
+  let help = vec![
+    format!("apmw clone {}", package),
+    format!("apmw --daemon clone {}", package),
+  ];
+  let output = dispatcher.render_item(&item, &help);
+  println!("{output}");
+
+  Ok(())
+}
+
+/// Run a clone as a background job via the daemon's JobManager.
+///
+/// Creates a job, spawns the clone task, and returns immediately with the
+/// job ID in TOON format.
+async fn run_clone_as_job(
+  manager: &DaemonManager,
+  engine: &CloneEngine,
+  package: &str,
+  dest_dir: &std::path::Path,
+  cli: &Cli,
+) -> anyhow::Result<()> {
+  // Create a job via the daemon's IPC.
+  let client = apmw::daemon::SocketClient::new(manager.socket_path());
+  let resp = client
+    .send(&apmw::daemon::Request::CreateJob {
+      kind: "clone".to_string(),
+      description: format!("clone {package}"),
+    })
+    .await
+    .map_err(|e| anyhow::anyhow!(e))?;
+  let job_id = match resp {
+    apmw::daemon::Response::JobCreated { id } => id,
+    other => {
+      return Err(anyhow::anyhow!(ApmwError::Daemon(format!(
+        "unexpected response to create-job: {other:?}"
+      ))))
+    }
+  };
+
+  // Spawn the clone task. The engine is cloned (it's cheap and stateless)
+  // so the spawned task owns its own copy and does not borrow from the
+  // caller's stack frame.
+  let package_clone = package.to_string();
+  let dest_clone = dest_dir.to_path_buf();
+  let socket_path = manager.socket_path().to_path_buf();
+  let job_id_clone = job_id.clone();
+  let engine_owned = engine.clone();
+  tokio::spawn(async move {
+    let result = engine_owned.clone_repo(&package_clone, &dest_clone).await;
+    let client = apmw::daemon::SocketClient::new(&socket_path);
+    match result {
+      Ok(r) => {
+        tracing::info!(
+          job_id = %job_id_clone,
+          repo = %r.repo,
+          "clone job completed"
+        );
+        // Best-effort: mark the job as completed via IPC (if supported).
+        let _ = client
+          .send(&apmw::daemon::Request::GetJob {
+            id: job_id_clone.clone(),
+          })
+          .await;
+      }
+      Err(e) => {
+        tracing::error!(job_id = %job_id_clone, error = %e, "clone job failed");
+      }
+    }
+  });
+
+  // Output the job ID in TOON format.
+  let mut dispatcher = OutputDispatcher::from_flags(
+    cli.global.human,
+    cli.global.json,
+    cli.global.fields.as_deref(),
+    cli.global.full,
+  );
+  dispatcher.schema = apmw::output::Schema::with_fields_str(
+    vec!["job_id".into(), "status".into(), "repo".into()],
+    cli.global.fields.as_deref(),
+  );
+  let item = serde_json::json!({
+    "job_id": job_id.as_str(),
+    "status": "pending",
+    "repo": package,
+  });
+  let help = vec![
+    format!("apmw --list-jobs"),
+    format!("apmw --cancel-job {}", job_id),
+  ];
+  let output = dispatcher.render_item(&item, &help);
+  println!("{output}");
+
+  Ok(())
+}
+
+/// Print a brief usage summary to stdout.
+///
+/// This is the `--usage` output: a one-line synopsis followed by the most
+/// common commands and flags. For the full description use `--help`.
+fn print_brief_usage() {
+  println!(
+    "apmw {version} — All Package Manager Wrapper",
+    version = apmw::version()
+  );
+  println!();
+  println!("USAGE:");
+  println!("    apmw [OPTIONS] [COMMAND]");
+  println!();
+  println!("COMMANDS:");
+  println!("    install <package>   Install a package or tool (use --dev for build-time deps)");
+  println!("    detect              Detect the package manager for the current project");
+  println!("    status              Show apmw status");
+  println!("    clone <repo>        Historyless clone with AST indexing");
+  println!("    scan [package]      Scan a package or the current project for security issues");
+  println!("    suggest <package>   Suggest within-ecosystem alternatives");
+  println!("    info <package>      Show detailed info about a package");
+  println!("    audit-log           Show the audit log of past operations");
+  println!("    config              View or initialize configuration");
+  println!("    governance refresh  Refresh the cached governance spec");
+  println!("    intercept <tool>    Intercept a package manager call (used by shims)");
+  println!("    mcp                 Start the MCP server over stdio");
+  println!();
+  println!("COMMON FLAGS:");
+  println!("    --json              Emit JSON (machine-readable) output");
+  println!("    --human             Human-readable output (escape hatch for AXI/TOON)");
+  println!("    --manager <name>    Override auto-detection and force a manager");
+  println!("    --dry-run           Show what would happen without making changes");
+  println!("    --no-scan           Skip security scanning");
+  println!("    --no-pager          Disable pager output");
+  println!("    -v / -vv            Increase verbosity");
+  println!("    -q                  Suppress non-error output");
+  println!("    --daemon            Run in daemon mode (background jobs)");
+  println!("    --no-daemon         Force synchronous operation");
+  println!("    --list-jobs         List background jobs");
+  println!("    --cancel-job <id>   Cancel a background job");
+  println!();
+  println!("INSTALL / SETUP:");
+  println!("    --install [--shell bash|zsh|fish]   Generate completions + init config");
+  println!("    --install --intercept               Install PATH shims (hard intercept)");
+  println!("    --man                               Print the man page to stdout");
+  println!("    --usage                             Show this brief summary");
+  println!("    --help                              Show full help");
+  println!("    --version                           Show version");
+  println!();
+  println!("See `apmw --help` for full details, or `man apmw` for the manual.");
 }
 
 /// Generate shell completions and initialize the config file.
@@ -302,6 +685,61 @@ fn run_uninstall() -> anyhow::Result<()> {
     "Completion scripts: remove _apmw / apmw.bash / apmw.fish from your shell completion dirs."
   );
   Ok(())
+}
+
+/// Install PATH shims that intercept package manager calls (hard intercept).
+///
+/// Shims are written to the default shim directory. The user should add this
+/// directory to the front of their PATH so the shims take precedence over the
+/// real binaries.
+fn run_install_intercept() -> anyhow::Result<()> {
+  let dir = default_shim_dir().map_err(|e| anyhow::anyhow!(e))?;
+  let engine = GovernanceEngine::default();
+  let mgr = HookManager::new(engine);
+  match mgr.install_shims(&dir) {
+    Ok(installed) => {
+      println!(
+        "Installed {} intercept shim(s) to {}",
+        installed.len(),
+        dir.display()
+      );
+      println!();
+      println!("Add this directory to the FRONT of your PATH:");
+      println!("  export PATH=\"{}:$PATH\"", dir.display());
+      println!();
+      println!("To remove the shims later: apmw --uninstall --intercept");
+      Ok(())
+    }
+    Err(e) => {
+      eprintln!("Failed to install intercept shims: {e}");
+      Err(anyhow::anyhow!(e))
+    }
+  }
+}
+
+/// Remove PATH shims that intercept package manager calls.
+fn run_uninstall_intercept() -> anyhow::Result<()> {
+  let dir = default_shim_dir().map_err(|e| anyhow::anyhow!(e))?;
+  let engine = GovernanceEngine::default();
+  let mgr = HookManager::new(engine);
+  match mgr.uninstall_shims(&dir) {
+    Ok(removed) => {
+      if removed.is_empty() {
+        println!("No intercept shims found in {}", dir.display());
+      } else {
+        println!(
+          "Removed {} intercept shim(s) from {}",
+          removed.len(),
+          dir.display()
+        );
+      }
+      Ok(())
+    }
+    Err(e) => {
+      eprintln!("Failed to remove intercept shims: {e}");
+      Err(anyhow::anyhow!(e))
+    }
+  }
 }
 
 /// Record a `--manager` override in the audit log with source `cli-override`.

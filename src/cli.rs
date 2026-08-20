@@ -266,6 +266,15 @@ pub struct GlobalArgs {
     value_parser = manager_value_parser,
   )]
   pub manager: Option<String>,
+
+  // --- Telemetry flags (PRD FR-6) ---
+  /// Disable telemetry collection for this invocation.
+  #[arg(long, global = true)]
+  pub no_telemetry: bool,
+
+  /// Print the telemetry payload that would be sent without actually sending it.
+  #[arg(long, global = true)]
+  pub telemetry_preview: bool,
 }
 
 /// The top-level apmw CLI (ADR-20260607001).
@@ -285,9 +294,28 @@ pub struct Cli {
   #[arg(long)]
   pub uninstall: bool,
 
+  /// Install or remove PATH shims that intercept package manager calls
+  /// (used with `--install` or `--uninstall`).
+  #[arg(long)]
+  pub intercept: bool,
+
   /// Shell to generate completions for (used with --install).
   #[arg(long, value_name = "SHELL", requires = "install")]
   pub shell: Option<Shell>,
+
+  /// Print the man page to stdout (groff/troff format) and exit.
+  ///
+  /// The output can be piped to `man -l -` or saved to a file under
+  /// `man/man1/apmw.1`. Equivalent to `man apmw` once installed.
+  #[arg(long, exclusive = true)]
+  pub man: bool,
+
+  /// Print a brief usage summary and exit.
+  ///
+  /// Shows a one-line synopsis and the most common commands, suitable for
+  /// quick reference. Use `--help` for the full description.
+  #[arg(long, exclusive = true)]
+  pub usage: bool,
 
   /// Global flags shared across all subcommands.
   #[command(flatten)]
@@ -354,6 +382,42 @@ pub enum Commands {
     #[arg(long)]
     show: bool,
   },
+
+  /// Manage governance rules (refresh the spec, show current rules).
+  Governance {
+    #[command(subcommand)]
+    subcommand: GovernanceSubcommand,
+  },
+
+  /// Intercept a package manager call (invoked by PATH shims).
+  ///
+  /// This subcommand is normally called by the shims installed via
+  /// `--install --intercept`. It evaluates governance rules, runs security
+  /// scanning, and then delegates to the real binary (or the canonical
+  /// alternative if governance forces it).
+  Intercept {
+    /// The package manager tool that was intercepted (e.g. `pip`, `npm`).
+    tool: String,
+
+    /// Arguments to pass through to the (canonical) package manager.
+    #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+    args: Vec<String>,
+  },
+
+  /// Start the MCP (Model Context Protocol) server over stdio.
+  ///
+  /// AI agents (Claude Code, Codex, OpenCode) connect to this server to
+  /// invoke apmw operations (add, detect, scan, clone, etc.) as MCP tools.
+  /// The server reads line-delimited JSON-RPC 2.0 messages from stdin and
+  /// writes responses to stdout.
+  Mcp,
+}
+
+/// Subcommands for `apmw governance`.
+#[derive(Subcommand, Debug, Clone, PartialEq, Eq)]
+pub enum GovernanceSubcommand {
+  /// Force-refresh the cached governance spec from levonk-packages.
+  Refresh,
 }
 
 #[cfg(test)]
@@ -634,6 +698,30 @@ mod tests {
   }
 
   #[test]
+  fn test_parse_man_flag() {
+    let cli = Cli::try_parse_from(["apmw", "--man"]).unwrap();
+    assert!(cli.man);
+  }
+
+  #[test]
+  fn test_parse_usage_flag() {
+    let cli = Cli::try_parse_from(["apmw", "--usage"]).unwrap();
+    assert!(cli.usage);
+  }
+
+  #[test]
+  fn test_parse_man_flag_default_false() {
+    let cli = Cli::try_parse_from(["apmw", "status"]).unwrap();
+    assert!(!cli.man);
+  }
+
+  #[test]
+  fn test_parse_usage_flag_default_false() {
+    let cli = Cli::try_parse_from(["apmw", "status"]).unwrap();
+    assert!(!cli.usage);
+  }
+
+  #[test]
   fn test_parse_install_with_shell() {
     let cli = Cli::try_parse_from(["apmw", "--install", "--shell", "bash"]).unwrap();
     assert!(cli.install);
@@ -871,5 +959,51 @@ mod tests {
       "Expected 29 valid managers, got {}",
       VALID_MANAGERS.len()
     );
+  }
+
+  // --- Telemetry flag tests (story 04-005) ---
+
+  #[test]
+  fn test_parse_no_telemetry_flag() {
+    let cli = Cli::try_parse_from(["apmw", "--no-telemetry", "status"]).unwrap();
+    assert!(cli.global.no_telemetry);
+  }
+
+  #[test]
+  fn test_parse_no_telemetry_flag_default_false() {
+    let cli = Cli::try_parse_from(["apmw", "status"]).unwrap();
+    assert!(!cli.global.no_telemetry);
+  }
+
+  #[test]
+  fn test_parse_no_telemetry_with_subcommand() {
+    let cli = Cli::try_parse_from(["apmw", "install", "express", "--no-telemetry"]).unwrap();
+    assert!(cli.global.no_telemetry);
+  }
+
+  #[test]
+  fn test_parse_telemetry_preview_flag() {
+    let cli = Cli::try_parse_from(["apmw", "--telemetry-preview", "status"]).unwrap();
+    assert!(cli.global.telemetry_preview);
+  }
+
+  #[test]
+  fn test_parse_telemetry_preview_default_false() {
+    let cli = Cli::try_parse_from(["apmw", "status"]).unwrap();
+    assert!(!cli.global.telemetry_preview);
+  }
+
+  #[test]
+  fn test_parse_telemetry_preview_with_subcommand() {
+    let cli = Cli::try_parse_from(["apmw", "detect", "--telemetry-preview"]).unwrap();
+    assert!(cli.global.telemetry_preview);
+  }
+
+  #[test]
+  fn test_parse_both_telemetry_flags() {
+    let cli =
+      Cli::try_parse_from(["apmw", "--no-telemetry", "--telemetry-preview", "status"]).unwrap();
+    assert!(cli.global.no_telemetry);
+    assert!(cli.global.telemetry_preview);
   }
 }

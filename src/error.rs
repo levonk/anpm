@@ -51,6 +51,9 @@ pub enum ApmwError {
 
   #[error("TOML error: {0}")]
   Toml(#[from] toml::de::Error),
+
+  #[error("Governance error: {0}")]
+  Governance(String),
 }
 
 /// Result type alias for apmw operations.
