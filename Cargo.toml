@@ -30,7 +30,7 @@ zeroize = "1.7"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 indicatif = "0.17"
-toml = "0.8"
+toml = "1.1"
 dirs = "5"
 anstyle = "1"
 ureq = { version = "=2.11.0", features = ["json", "tls"], default-features = false }
