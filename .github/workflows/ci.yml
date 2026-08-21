@@ -18,7 +18,7 @@ jobs:
     name: Format check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: jetify-com/devbox-action@v0.10.0
         with:
           enable-cache: true
@@ -28,7 +28,7 @@ jobs:
     name: Clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: jetify-com/devbox-action@v0.10.0
         with:
           enable-cache: true
@@ -44,7 +44,7 @@ jobs:
     env:
       APMW_TEST_SANDBOX_REQUIRED: "1"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: jetify-com/devbox-action@v0.10.0
         with:
           enable-cache: true
@@ -56,7 +56,7 @@ jobs:
     name: Build (release)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: jetify-com/devbox-action@v0.10.0
         with:
           enable-cache: true
@@ -66,7 +66,7 @@ jobs:
     name: Security audit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: jetify-com/devbox-action@v0.10.0
         with:
           enable-cache: true
@@ -76,7 +76,7 @@ jobs:
     name: Documentation build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: jetify-com/devbox-action@v0.10.0
         with:
           enable-cache: true
@@ -87,7 +87,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: jetify-com/devbox-action@v0.10.0
         with:
           enable-cache: true
