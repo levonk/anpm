@@ -147,6 +147,9 @@ validate_impl:
     cargo test
     cargo doc --no-deps
     cargo audit
+    # Non-blocking: cargo outdated defaults to --exit-code 0 (reports only).
+    # Warn on failure so a network error doesn't abort the whole validate.
+    cargo outdated || log_warn "cargo outdated failed (non-blocking)"
     log_end "All quality gates passed"
 
 validate:
