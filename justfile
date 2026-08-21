@@ -146,6 +146,7 @@ validate_impl:
     cargo clippy --all-targets --all-features -- -D warnings
     cargo test
     cargo doc --no-deps
+    cargo audit
     log_end "All quality gates passed"
 
 validate:

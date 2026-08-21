@@ -53,7 +53,7 @@ just format      # Format code with rustfmt
 just check       # Run cargo check
 just audit       # Run cargo audit for vulnerabilities
 just outdated    # Check for outdated dependencies
-just validate    # Run all quality gates (fmt + clippy + test + doc)
+just validate    # Run all quality gates (fmt + clippy + test + doc + audit)
 just clean       # Remove build artifacts
 just doctor      # Check development environment
 just bootstrap   # Set up development environment
@@ -69,7 +69,7 @@ just format_impl      # cargo fmt --all
 just check_impl       # cargo check --all-targets --all-features
 just audit_impl       # cargo audit
 just outdated_impl    # cargo outdated
-just validate_impl    # fmt check + clippy + test + doc
+just validate_impl    # fmt check + clippy + test + doc + audit
 just clean_impl       # cargo clean
 ```
 
@@ -228,4 +228,10 @@ A change is ready to merge when all of these pass:
 6. `cargo build --release` succeeds
 7. `cargo audit` finds no vulnerabilities
 
-Run `just validate` to check all gates at once.
+Run `just validate` to check gates 2–5 and 7 at once (fmt + clippy + test +
+doc + audit). `cargo check` and `cargo build --release` are covered by
+`just check` and `just build` respectively.
+
+`cargo outdated` is **not** a merge gate — it runs as a weekly scheduled CI
+job (Sundays 09:00 UTC) and opens an issue when dependencies drift. Run
+`just outdated` locally for an on-demand check.
