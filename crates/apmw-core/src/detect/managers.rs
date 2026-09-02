@@ -143,6 +143,80 @@ impl std::fmt::Display for PackageManager {
   }
 }
 
+/// An owned version of [`PackageManager`] — uses `String` and `Vec<String>`
+/// instead of `&'static str` so it can represent custom project types loaded
+/// at runtime from YAML config files.
+///
+/// Built-in managers can be converted to this type via [`PackageManagerOwned::from_builtin`],
+/// and custom types via [`PackageManagerOwned::from_custom`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PackageManagerOwned {
+  /// Canonical name (e.g. `cargo`, `pnpm`, `pip`, or a custom name like `wgsl`).
+  pub name: String,
+  /// Human-readable display name.
+  pub display_name: String,
+  /// Ecosystem this manager belongs to.
+  pub ecosystem: Ecosystem,
+  /// Hierarchy level.
+  pub hierarchy: HierarchyLevel,
+  /// Primary identifying files — lockfiles and config files that strongly
+  /// indicate this manager is in use (glob patterns supported, e.g.
+  /// `Cargo.toml`, `*.csproj`).
+  pub primary_files: Vec<String>,
+  /// Secondary identifying files — supporting evidence (glob patterns).
+  pub secondary_files: Vec<String>,
+  /// Directory markers — directories whose presence indicates this manager.
+  pub dir_markers: Vec<String>,
+  /// Detection priority — higher numbers are checked first when multiple
+  /// managers share the same primary file.
+  pub priority: i32,
+}
+
+impl PackageManagerOwned {
+  /// Create a [`PackageManagerOwned`] from a built-in [`PackageManager`].
+  pub fn from_builtin(m: &PackageManager) -> Self {
+    PackageManagerOwned {
+      name: m.name.to_string(),
+      display_name: m.display_name.to_string(),
+      ecosystem: m.ecosystem,
+      hierarchy: m.hierarchy,
+      primary_files: m.primary_files.iter().map(|s| s.to_string()).collect(),
+      secondary_files: m.secondary_files.iter().map(|s| s.to_string()).collect(),
+      dir_markers: m.dir_markers.iter().map(|s| s.to_string()).collect(),
+      priority: m.priority as i32,
+    }
+  }
+
+  /// Create a [`PackageManagerOwned`] from a custom project type definition.
+  pub fn from_custom(custom: &crate::custom_types::CustomProjectType) -> Self {
+    PackageManagerOwned {
+      name: custom.name.clone(),
+      display_name: custom.display_name.clone(),
+      ecosystem: custom.ecosystem,
+      hierarchy: custom.hierarchy,
+      primary_files: custom.primary_files.clone(),
+      secondary_files: custom.secondary_files.clone(),
+      dir_markers: custom.dir_markers.clone(),
+      priority: custom.priority,
+    }
+  }
+
+  /// Returns all primary and secondary files combined.
+  pub fn all_files(&self) -> impl Iterator<Item = &str> {
+    self
+      .primary_files
+      .iter()
+      .chain(self.secondary_files.iter())
+      .map(|s| s.as_str())
+  }
+}
+
+impl std::fmt::Display for PackageManagerOwned {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(f, "{}", self.name)
+  }
+}
+
 /// Returns the registry of all known package managers and build systems.
 ///
 /// Ordered by detection priority (highest first) so that when multiple
@@ -580,5 +654,57 @@ mod tests {
   fn test_ecosystem_display() {
     assert_eq!(Ecosystem::Rust.to_string(), "rust");
     assert_eq!(Ecosystem::Node.to_string(), "node");
+  }
+
+  #[test]
+  fn test_package_manager_owned_from_builtin() {
+    let cargo = find_manager("cargo").unwrap();
+    let owned = PackageManagerOwned::from_builtin(cargo);
+    assert_eq!(owned.name, "cargo");
+    assert_eq!(owned.display_name, "Cargo");
+    assert_eq!(owned.ecosystem, Ecosystem::Rust);
+    assert_eq!(owned.hierarchy, HierarchyLevel::Language);
+    assert!(owned.primary_files.contains(&"Cargo.toml".to_string()));
+    assert!(owned.secondary_files.contains(&"Cargo.lock".to_string()));
+    assert!(owned.dir_markers.contains(&"target".to_string()));
+    assert_eq!(owned.priority, 21);
+  }
+
+  #[test]
+  fn test_package_manager_owned_from_custom() {
+    use crate::custom_types::CustomProjectType;
+    let custom = CustomProjectType {
+      name: "wgsl".to_string(),
+      display_name: "WGSL Shaders".to_string(),
+      ecosystem: Ecosystem::Unknown,
+      hierarchy: HierarchyLevel::BuildSystem,
+      primary_files: vec!["*.wgsl".to_string()],
+      secondary_files: vec!["wgsl.toml".to_string()],
+      dir_markers: vec!["shaders".to_string()],
+      priority: 50,
+    };
+    let owned = PackageManagerOwned::from_custom(&custom);
+    assert_eq!(owned.name, "wgsl");
+    assert_eq!(owned.display_name, "WGSL Shaders");
+    assert_eq!(owned.ecosystem, Ecosystem::Unknown);
+    assert_eq!(owned.hierarchy, HierarchyLevel::BuildSystem);
+    assert_eq!(owned.primary_files, vec!["*.wgsl"]);
+    assert_eq!(owned.priority, 50);
+  }
+
+  #[test]
+  fn test_package_manager_owned_all_files() {
+    let cargo = find_manager("cargo").unwrap();
+    let owned = PackageManagerOwned::from_builtin(cargo);
+    let files: Vec<&str> = owned.all_files().collect();
+    assert!(files.contains(&"Cargo.toml"));
+    assert!(files.contains(&"Cargo.lock"));
+  }
+
+  #[test]
+  fn test_package_manager_owned_display() {
+    let cargo = find_manager("cargo").unwrap();
+    let owned = PackageManagerOwned::from_builtin(cargo);
+    assert_eq!(owned.to_string(), "cargo");
   }
 }

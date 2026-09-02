@@ -21,6 +21,9 @@ pub enum CoreError {
 
   #[error("TOML error: {0}")]
   Toml(#[from] toml::de::Error),
+
+  #[error("YAML error: {0}")]
+  Yaml(#[from] serde_yaml::Error),
 }
 
 /// Result type alias for apmw-core operations.
@@ -67,5 +70,12 @@ mod tests {
     let err = CoreError::VersionResolution("x".to_string());
     let debug = format!("{:?}", err);
     assert!(debug.contains("VersionResolution"));
+  }
+
+  #[test]
+  fn test_yaml_error_from() {
+    let yaml_err = serde_yaml::from_str::<serde_yaml::Value>(": : bad").unwrap_err();
+    let err: CoreError = yaml_err.into();
+    assert!(err.to_string().starts_with("YAML error: "));
   }
 }

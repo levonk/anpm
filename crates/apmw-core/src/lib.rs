@@ -6,6 +6,7 @@
 //! reusable by downstream projects that need package-manager detection without
 //! the full CLI/daemon surface.
 
+pub mod custom_types;
 pub mod detect;
 pub mod ecosystem;
 pub mod error;
