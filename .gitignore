@@ -34,3 +34,6 @@ tarpaulin-report.html
 
 # Packaging generator output
 packaging/*/dist/
+
+# Proptest regression artifacts
+/proptest-regressions/
