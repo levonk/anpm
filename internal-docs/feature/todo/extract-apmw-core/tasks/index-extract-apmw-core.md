@@ -9,7 +9,7 @@
 |---|---|---:|---|---|---|---|---|---|---|
 | 08-001 | Extract detect+ecosystem+version into apmw-core crate (Cargo workspace) | 08 | [x] Done |  | false | — | 08-002, 08-003, 08-004, 08-005 | crates/apmw-core/, crates/apmw/, Cargo.toml | feature/current/extract-apmw-core/story-08-001-extract-apmw-core |
 | 08-002 | Add YAML custom project types | 08 | [x] Done |  | true | 08-001 | 08-005 | crates/apmw-core/src/custom_types/ | feature/current/extract-apmw-core/story-08-002-yaml-custom-types |
-| 08-003 | Add workspace/monorepo detection | 08 | [ ] Todo |  | true | 08-001 | 08-005 | crates/apmw-core/src/workspace/ | feature/current/extract-apmw-core/story-08-003-workspace-detection |
+| 08-003 | Add workspace/monorepo detection | 08 | [x] Done |  | true | 08-001 | 08-005 | crates/apmw-core/src/workspace/ | feature/current/extract-apmw-core/story-08-003-workspace-detection |
 | 08-004 | Add version info extraction | 08 | [ ] Todo |  | true | 08-001 | 08-005 | crates/apmw-core/src/version_info/ | feature/current/extract-apmw-core/story-08-004-version-info-extraction |
 | 08-005 | Publish apmw-core to crates.io | 08 | [ ] Todo |  | false | 08-001, 08-002, 08-003, 08-004 | — | crates/apmw-core/Cargo.toml, crates/apmw/Cargo.toml | feature/current/extract-apmw-core/story-08-005-publish-apmw-core |
 
