@@ -11,6 +11,7 @@ pub mod detect;
 pub mod ecosystem;
 pub mod error;
 pub mod version;
+pub mod version_info;
 pub mod workspace;
 
 pub use error::{CoreError, Result};
