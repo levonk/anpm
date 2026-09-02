@@ -54,6 +54,9 @@ pub enum ApmwError {
 
   #[error("Governance error: {0}")]
   Governance(String),
+
+  #[error("Core error: {0}")]
+  Core(#[from] apmw_core::CoreError),
 }
 
 /// Result type alias for apmw operations.
