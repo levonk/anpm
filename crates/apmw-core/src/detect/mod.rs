@@ -1059,6 +1059,9 @@ mod tests {
       .find(|r| r.manager == "wgsl")
       .expect("wgsl should be detected");
     assert!(wgsl.confidence > 0.0);
-    assert!(wgsl.evidence.iter().any(|e| e.path == "shaders" && e.kind == "directory"));
+    assert!(wgsl
+      .evidence
+      .iter()
+      .any(|e| e.path == "shaders" && e.kind == "directory"));
   }
 }

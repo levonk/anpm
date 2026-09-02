@@ -93,7 +93,12 @@ impl Default for CustomTypesConfig {
 /// Returns the user-wide config path: `~/.config/apmw/project-types.yml`.
 fn user_config_path() -> Option<PathBuf> {
   let home = std::env::var_os("HOME")?;
-  Some(PathBuf::from(home).join(".config").join("apmw").join("project-types.yml"))
+  Some(
+    PathBuf::from(home)
+      .join(".config")
+      .join("apmw")
+      .join("project-types.yml"),
+  )
 }
 
 /// Returns the per-project config path: `.apmw/project-types.yml` (relative
@@ -157,7 +162,8 @@ fn merge_custom_type_lists(
 /// }
 /// ```
 pub fn load_custom_types() -> Result<Vec<CustomProjectType>> {
-  let user_wide = user_config_path().unwrap_or_else(|| PathBuf::from("~/.config/apmw/project-types.yml"));
+  let user_wide =
+    user_config_path().unwrap_or_else(|| PathBuf::from("~/.config/apmw/project-types.yml"));
   let per_project = project_config_path();
   load_custom_types_from(&user_wide, &per_project)
 }
@@ -170,7 +176,10 @@ pub fn load_custom_types() -> Result<Vec<CustomProjectType>> {
 ///
 /// `user_wide` is loaded first, then `per_project` types override user-wide
 /// types with the same name. Missing files are not an error.
-pub fn load_custom_types_from(user_wide: &Path, per_project: &Path) -> Result<Vec<CustomProjectType>> {
+pub fn load_custom_types_from(
+  user_wide: &Path,
+  per_project: &Path,
+) -> Result<Vec<CustomProjectType>> {
   let base = load_from_file(user_wide)?;
   let project = load_from_file(per_project)?;
   Ok(merge_custom_type_lists(&base, &project))
@@ -371,8 +380,14 @@ types:
     let types = load_from_file(&config_path).expect("load failed");
     assert_eq!(types.len(), 1);
     assert_eq!(types[0].name, "minimal");
-    assert!(types[0].secondary_files.is_empty(), "secondary_files should default to empty");
-    assert!(types[0].dir_markers.is_empty(), "dir_markers should default to empty");
+    assert!(
+      types[0].secondary_files.is_empty(),
+      "secondary_files should default to empty"
+    );
+    assert!(
+      types[0].dir_markers.is_empty(),
+      "dir_markers should default to empty"
+    );
     assert_eq!(types[0].priority, 0, "priority should default to 0");
   }
 
@@ -420,12 +435,21 @@ types:
     // Should have 2 types: shaderc (from user) + wgsl (from project, overriding user).
     assert_eq!(types.len(), 2);
 
-    let wgsl = types.iter().find(|t| t.name == "wgsl").expect("wgsl must exist");
-    assert_eq!(wgsl.display_name, "WGSL (project)", "per-project should override user-wide");
+    let wgsl = types
+      .iter()
+      .find(|t| t.name == "wgsl")
+      .expect("wgsl must exist");
+    assert_eq!(
+      wgsl.display_name, "WGSL (project)",
+      "per-project should override user-wide"
+    );
     assert_eq!(wgsl.priority, 50);
     assert!(wgsl.primary_files.contains(&"*.comp".to_string()));
 
-    let shaderc = types.iter().find(|t| t.name == "shaderc").expect("shaderc must exist");
+    let shaderc = types
+      .iter()
+      .find(|t| t.name == "shaderc")
+      .expect("shaderc must exist");
     assert_eq!(shaderc.display_name, "ShaderC (user)");
   }
 
@@ -527,11 +551,18 @@ types:
     let merged = merge_with_builtins(&custom, all_managers());
 
     // Should have exactly one "cargo" entry (the custom one, not the built-in).
-    let cargo_entries: Vec<&PackageManagerOwned> = merged.iter().filter(|m| m.name == "cargo").collect();
-    assert_eq!(cargo_entries.len(), 1, "should have exactly one cargo entry");
+    let cargo_entries: Vec<&PackageManagerOwned> =
+      merged.iter().filter(|m| m.name == "cargo").collect();
+    assert_eq!(
+      cargo_entries.len(),
+      1,
+      "should have exactly one cargo entry"
+    );
     assert_eq!(cargo_entries[0].display_name, "Custom Cargo");
     assert_eq!(cargo_entries[0].priority, 100);
-    assert!(cargo_entries[0].primary_files.contains(&"Cargo-custom.toml".to_string()));
+    assert!(cargo_entries[0]
+      .primary_files
+      .contains(&"Cargo-custom.toml".to_string()));
 
     // Total count = built-ins (one removed) + 1 custom = same as built-ins.
     assert_eq!(merged.len(), all_managers().len());

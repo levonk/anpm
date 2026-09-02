@@ -35,6 +35,10 @@ pub enum Ecosystem {
   Rust,
   /// Go ecosystem — canonical manager: `go`.
   Go,
+  /// Ruby ecosystem — canonical manager: `gem`.
+  Ruby,
+  /// PHP ecosystem — canonical manager: `composer`.
+  Php,
   /// JVM ecosystem (Java, Kotlin, Scala) — managers: maven, gradle, sbt.
   Jvm,
   /// Swift / Apple ecosystem — managers: swiftpm, cocoapods, carthage.
@@ -55,6 +59,8 @@ impl Ecosystem {
       Ecosystem::Node => PackageManager::Pnpm,
       Ecosystem::Rust => PackageManager::Cargo,
       Ecosystem::Go => PackageManager::Go,
+      Ecosystem::Ruby => PackageManager::Gem,
+      Ecosystem::Php => PackageManager::Composer,
       Ecosystem::Jvm => PackageManager::Maven,
       Ecosystem::Swift => PackageManager::SwiftPm,
       Ecosystem::Dotnet => PackageManager::Dotnet,
@@ -71,6 +77,8 @@ impl std::fmt::Display for Ecosystem {
       Ecosystem::Node => write!(f, "node"),
       Ecosystem::Rust => write!(f, "rust"),
       Ecosystem::Go => write!(f, "go"),
+      Ecosystem::Ruby => write!(f, "ruby"),
+      Ecosystem::Php => write!(f, "php"),
       Ecosystem::Jvm => write!(f, "jvm"),
       Ecosystem::Swift => write!(f, "swift"),
       Ecosystem::Dotnet => write!(f, "dotnet"),
@@ -137,6 +145,8 @@ pub enum PackageManager {
   Uv,
   Cargo,
   Go,
+  Gem,
+  Composer,
   Maven,
   Gradle,
   Sbt,
@@ -166,6 +176,8 @@ impl PackageManager {
       | PackageManager::Uv => Ecosystem::Python,
       PackageManager::Cargo => Ecosystem::Rust,
       PackageManager::Go => Ecosystem::Go,
+      PackageManager::Gem => Ecosystem::Ruby,
+      PackageManager::Composer => Ecosystem::Php,
       PackageManager::Maven | PackageManager::Gradle | PackageManager::Sbt => Ecosystem::Jvm,
       PackageManager::SwiftPm | PackageManager::CocoaPods | PackageManager::Carthage => {
         Ecosystem::Swift
@@ -195,6 +207,8 @@ impl PackageManager {
       PackageManager::Uv => "uv",
       PackageManager::Cargo => "cargo",
       PackageManager::Go => "go",
+      PackageManager::Gem => "gem",
+      PackageManager::Composer => "composer",
       PackageManager::Maven => "maven",
       PackageManager::Gradle => "gradle",
       PackageManager::Sbt => "sbt",
@@ -224,6 +238,8 @@ impl PackageManager {
       "uv" => Some(PackageManager::Uv),
       "cargo" => Some(PackageManager::Cargo),
       "go" => Some(PackageManager::Go),
+      "gem" | "bundler" => Some(PackageManager::Gem),
+      "composer" => Some(PackageManager::Composer),
       "maven" | "mvn" => Some(PackageManager::Maven),
       "gradle" => Some(PackageManager::Gradle),
       "sbt" => Some(PackageManager::Sbt),
@@ -262,6 +278,8 @@ pub fn all_managers() -> Vec<PackageManager> {
     PackageManager::Uv,
     PackageManager::Cargo,
     PackageManager::Go,
+    PackageManager::Gem,
+    PackageManager::Composer,
     PackageManager::Maven,
     PackageManager::Gradle,
     PackageManager::Sbt,
@@ -283,6 +301,8 @@ pub fn all_ecosystems() -> Vec<Ecosystem> {
     Ecosystem::Node,
     Ecosystem::Rust,
     Ecosystem::Go,
+    Ecosystem::Ruby,
+    Ecosystem::Php,
     Ecosystem::Jvm,
     Ecosystem::Swift,
     Ecosystem::Dotnet,

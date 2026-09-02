@@ -331,11 +331,7 @@ mod tests {
   #[test]
   fn test_detect_cargo_workspace() {
     let dir = TempDir::new().unwrap();
-    write_file(
-      dir.path(),
-      "Cargo.toml",
-      "[workspace]\nmembers = []\n",
-    );
+    write_file(dir.path(), "Cargo.toml", "[workspace]\nmembers = []\n");
     let result = detect_workspace(dir.path()).expect("cargo workspace");
     assert_eq!(result.organizer, WorkspaceOrganizer::Cargo);
     assert_eq!(result.root, dir.path());
@@ -386,7 +382,11 @@ mod tests {
   #[test]
   fn test_detect_pnpm_workspace() {
     let dir = TempDir::new().unwrap();
-    write_file(dir.path(), "pnpm-workspace.yaml", "packages:\n  - packages/*\n");
+    write_file(
+      dir.path(),
+      "pnpm-workspace.yaml",
+      "packages:\n  - packages/*\n",
+    );
     let result = detect_workspace(dir.path()).expect("pnpm workspace");
     assert_eq!(result.organizer, WorkspaceOrganizer::Pnpm);
     assert_eq!(result.root, dir.path());
@@ -433,7 +433,11 @@ mod tests {
   #[test]
   fn test_detect_nx() {
     let dir = TempDir::new().unwrap();
-    write_file(dir.path(), "nx.json", r#"{"extends": "nx/presets/core.json"}"#);
+    write_file(
+      dir.path(),
+      "nx.json",
+      r#"{"extends": "nx/presets/core.json"}"#,
+    );
     let result = detect_workspace(dir.path()).expect("nx workspace");
     assert_eq!(result.organizer, WorkspaceOrganizer::Nx);
   }
@@ -441,11 +445,7 @@ mod tests {
   #[test]
   fn test_detect_turborepo() {
     let dir = TempDir::new().unwrap();
-    write_file(
-      dir.path(),
-      "turbo.json",
-      r#"{"pipeline": {"build": {}}}"#,
-    );
+    write_file(dir.path(), "turbo.json", r#"{"pipeline": {"build": {}}}"#);
     let result = detect_workspace(dir.path()).expect("turborepo workspace");
     assert_eq!(result.organizer, WorkspaceOrganizer::Turborepo);
   }
@@ -510,11 +510,7 @@ mod tests {
   #[test]
   fn test_cargo_takes_precedence_over_npm() {
     let dir = TempDir::new().unwrap();
-    write_file(
-      dir.path(),
-      "Cargo.toml",
-      "[workspace]\nmembers = []\n",
-    );
+    write_file(dir.path(), "Cargo.toml", "[workspace]\nmembers = []\n");
     write_file(
       dir.path(),
       "package.json",
