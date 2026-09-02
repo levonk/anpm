@@ -23,7 +23,9 @@ pub use attributes::{
   all_attributes, dir_marker_index, primary_file_index, secondary_file_index, DetectionAttributes,
   DetectionEvidence, EvidenceKind,
 };
-pub use managers::{all_managers, find_manager, Ecosystem, HierarchyLevel, PackageManager};
+pub use managers::{
+  all_managers, find_manager, Ecosystem, HierarchyLevel, PackageManager, PackageManagerOwned,
+};
 
 use std::collections::HashMap;
 use std::path::Path;
@@ -152,6 +154,22 @@ impl DetectionEngine {
   /// Returns all detected managers sorted by confidence (highest first).
   /// The caller decides which manager to use based on the confidence scores.
   pub fn detect(&self, dir: &Path) -> Result<Vec<DetectionResult>> {
+    self.detect_with_custom(dir, &[])
+  }
+
+  /// Detect package managers in the given directory, including custom types.
+  ///
+  /// Custom types are merged with the built-in [`PackageManager`] registry:
+  /// a custom type with the same name as a built-in replaces the built-in.
+  /// Custom types with unique names are added as additional detection
+  /// candidates.
+  ///
+  /// Returns all detected managers sorted by confidence (highest first).
+  pub fn detect_with_custom(
+    &self,
+    dir: &Path,
+    custom: &[crate::custom_types::CustomProjectType],
+  ) -> Result<Vec<DetectionResult>> {
     let start = std::time::Instant::now();
 
     if !dir.exists() {
@@ -188,19 +206,22 @@ impl DetectionEngine {
       }
     }
 
+    // Build the merged candidate list: built-ins (minus overridden) + custom.
+    let candidates = crate::custom_types::merge_with_builtins(custom, all_managers());
+
     let mut results: Vec<DetectionResult> = Vec::new();
 
-    for manager in all_managers() {
+    for manager in &candidates {
       let mut evidence: Vec<DetectionEvidence> = Vec::new();
       let mut score: f64 = 0.0;
 
-      for pattern in manager.primary_files {
+      for pattern in &manager.primary_files {
         for name in &file_names {
           if attributes::matches_glob(pattern, name) {
             evidence.push(DetectionEvidence {
               path: name.clone(),
               kind: EvidenceKind::Primary,
-              manager_name: manager.name,
+              manager_name: "",
             });
             score += WEIGHT_PRIMARY;
             break;
@@ -208,13 +229,13 @@ impl DetectionEngine {
         }
       }
 
-      for pattern in manager.secondary_files {
+      for pattern in &manager.secondary_files {
         for name in &file_names {
           if attributes::matches_glob(pattern, name) {
             evidence.push(DetectionEvidence {
               path: name.clone(),
               kind: EvidenceKind::Secondary,
-              manager_name: manager.name,
+              manager_name: "",
             });
             score += WEIGHT_SECONDARY;
             break;
@@ -222,12 +243,12 @@ impl DetectionEngine {
         }
       }
 
-      for marker in manager.dir_markers {
+      for marker in &manager.dir_markers {
         if dir_names.iter().any(|d| d == marker) {
           evidence.push(DetectionEvidence {
-            path: marker.to_string(),
+            path: marker.clone(),
             kind: EvidenceKind::Directory,
-            manager_name: manager.name,
+            manager_name: "",
           });
           score += WEIGHT_DIRECTORY;
         }
@@ -244,7 +265,7 @@ impl DetectionEngine {
         };
 
         debug!(
-          manager = manager.name,
+          manager = %manager.name,
           score,
           max_possible,
           confidence,
@@ -253,8 +274,8 @@ impl DetectionEngine {
         );
 
         results.push(DetectionResult {
-          manager: manager.name.to_string(),
-          display_name: manager.display_name.to_string(),
+          manager: manager.name.clone(),
+          display_name: manager.display_name.clone(),
           ecosystem: manager.ecosystem.to_string(),
           hierarchy: manager.hierarchy.to_string(),
           confidence,
@@ -263,9 +284,10 @@ impl DetectionEngine {
       }
     }
 
-    let priority_map: HashMap<&str, u8> = all_managers()
+    // Sort by confidence (descending), then by priority (descending).
+    let priority_map: HashMap<String, i32> = candidates
       .iter()
-      .map(|m| (m.name, m.priority))
+      .map(|m| (m.name.clone(), m.priority))
       .collect();
     results.sort_by(|a, b| {
       b.confidence
@@ -315,6 +337,15 @@ pub fn detect_current_dir() -> Result<Vec<DetectionResult>> {
 pub fn detect_in(dir: &Path) -> Result<Vec<DetectionResult>> {
   let engine = DetectionEngine::new();
   engine.detect(dir)
+}
+
+/// Convenience function to detect in a specific directory with custom types.
+pub fn detect_in_with_custom(
+  dir: &Path,
+  custom: &[crate::custom_types::CustomProjectType],
+) -> Result<Vec<DetectionResult>> {
+  let engine = DetectionEngine::new();
+  engine.detect_with_custom(dir, custom)
 }
 
 #[cfg(test)]
@@ -916,5 +947,118 @@ mod tests {
     assert_eq!(result.confidence, 1.0);
     // No file-based evidence — only the CLI override marker.
     assert!(result.evidence.iter().all(|e| e.kind == "cli-override"));
+  }
+
+  // --- Custom type detection tests (story 08-002) ---
+
+  #[test]
+  fn test_detect_custom_type() {
+    use crate::custom_types::CustomProjectType;
+
+    let dir = make_project(&["shader.wgsl"]);
+    let engine = DetectionEngine::new();
+    let custom = vec![CustomProjectType {
+      name: "wgsl".to_string(),
+      display_name: "WGSL Shaders".to_string(),
+      ecosystem: Ecosystem::Unknown,
+      hierarchy: HierarchyLevel::BuildSystem,
+      primary_files: vec!["*.wgsl".to_string()],
+      secondary_files: vec![],
+      dir_markers: vec![],
+      priority: 50,
+    }];
+    let results = engine
+      .detect_with_custom(dir.path(), &custom)
+      .expect("detection failed");
+    let wgsl = results
+      .iter()
+      .find(|r| r.manager == "wgsl")
+      .expect("wgsl should be detected");
+    assert!(wgsl.confidence > 0.0);
+    assert!(wgsl.evidence.iter().any(|e| e.path == "shader.wgsl"));
+  }
+
+  #[test]
+  fn test_detect_custom_type_overrides_builtin() {
+    use crate::custom_types::CustomProjectType;
+
+    let dir = make_project(&["Cargo.toml", "Cargo-custom.toml"]);
+    let engine = DetectionEngine::new();
+
+    // Custom cargo with an extra primary file.
+    let custom = vec![CustomProjectType {
+      name: "cargo".to_string(),
+      display_name: "Custom Cargo".to_string(),
+      ecosystem: Ecosystem::Rust,
+      hierarchy: HierarchyLevel::Language,
+      primary_files: vec!["Cargo.toml".to_string(), "Cargo-custom.toml".to_string()],
+      secondary_files: vec![],
+      dir_markers: vec![],
+      priority: 100,
+    }];
+
+    let results_builtin = engine.detect(dir.path()).expect("detection failed");
+    let results_custom = engine
+      .detect_with_custom(dir.path(), &custom)
+      .expect("detection failed");
+
+    // With the override, cargo should have a different display name.
+    let cargo_custom = results_custom
+      .iter()
+      .find(|r| r.manager == "cargo")
+      .expect("cargo should be detected");
+    assert_eq!(cargo_custom.display_name, "Custom Cargo");
+
+    // The custom cargo should have higher confidence (2 primary files matched).
+    let cargo_builtin = results_builtin
+      .iter()
+      .find(|r| r.manager == "cargo")
+      .expect("cargo should be detected");
+    assert!(
+      cargo_custom.confidence > cargo_builtin.confidence,
+      "custom cargo with more evidence should have higher confidence: {} > {}",
+      cargo_custom.confidence,
+      cargo_builtin.confidence
+    );
+  }
+
+  #[test]
+  fn test_detect_with_custom_empty_is_same_as_detect() {
+    let dir = make_project(&["Cargo.toml", "Cargo.lock"]);
+    let engine = DetectionEngine::new();
+
+    let results_default = engine.detect(dir.path()).expect("detection failed");
+    let results_empty_custom = engine
+      .detect_with_custom(dir.path(), &[])
+      .expect("detection failed");
+
+    assert_eq!(results_default, results_empty_custom);
+  }
+
+  #[test]
+  fn test_detect_with_custom_dir_marker() {
+    use crate::custom_types::CustomProjectType;
+
+    let dir = make_project_with_dirs(&["wgsl.toml"], &["shaders"]);
+    let engine = DetectionEngine::new();
+    let custom = vec![CustomProjectType {
+      name: "wgsl".to_string(),
+      display_name: "WGSL Shaders".to_string(),
+      ecosystem: Ecosystem::Unknown,
+      hierarchy: HierarchyLevel::BuildSystem,
+      primary_files: vec![],
+      secondary_files: vec!["wgsl.toml".to_string()],
+      dir_markers: vec!["shaders".to_string()],
+      priority: 50,
+    }];
+    let results = engine
+      .detect_with_custom(dir.path(), &custom)
+      .expect("detection failed");
+    let wgsl = results
+      .iter()
+      .find(|r| r.manager == "wgsl")
+      .expect("wgsl should be detected");
+    assert!(wgsl.confidence > 0.0);
+    assert!(wgsl.evidence.iter().any(|e| e.path == "shaders" && e.kind == "directory"));
   }
 }
