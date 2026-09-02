@@ -18,7 +18,8 @@
     "github:nixos/nixpkgs/25.05#cargo-outdated": "",
     "github:nixos/nixpkgs/25.05#just": "",
     "git-secrets": "",
-    "github:levonk/nono#nono": ""
+    "github:levonk/nono#nono": "",
+    "github:kunchenguid/treehouse": ""
   },
   "shell": {
     "init_hook": [
