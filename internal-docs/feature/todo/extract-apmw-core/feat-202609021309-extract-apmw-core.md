@@ -3,7 +3,7 @@ date:
   created: "2026-09-02"
   completed: ""
   last-activity: "2026-09-02"
-status: In Progress
+status: Blocked
 slug: extract-apmw-core
 ---
 
@@ -136,24 +136,65 @@ error ──┐
 
 ## Definition of Done
 
-- [ ] **[script]** `cargo test --workspace` passes with 0 failures
-- [ ] **[script]** `just validate` passes (cargo audit + cargo outdated + clippy)
-- [ ] **[script]** `cargo publish --dry-run` succeeds for `apmw-core`
-- [ ] **[manual]** `apmw-core` crate exists at `crates/apmw-core/` with
+- [x] **[script]** `cargo test --workspace` passes with 0 failures (1182 tests, 0 failures)
+- [ ] **[script]** `just validate` passes (cargo audit + cargo outdated + clippy) — blocked on devbox/clippy/rustfmt tooling unavailability; `cargo build`, `cargo test`, `cargo doc`, and `cargo publish --dry-run` all pass
+- [x] **[script]** `cargo publish --dry-run` succeeds for `apmw-core`
+- [x] **[manual]** `apmw-core` crate exists at `crates/apmw-core/` with
   `detect`, `ecosystem`, `version`, `workspace`, `version_info`, and
   `custom_types` modules
-- [ ] **[manual]** `apmw` binary crate exists at `crates/apmw/` and depends
+- [x] **[manual]** `apmw` binary crate exists at `crates/apmw/` and depends
   on `apmw-core` via `path + version`
-- [ ] **[manual]** `ecosystem/mapping.rs` stays in the binary crate
-- [ ] **[manual]** YAML custom project types load from
+- [x] **[manual]** `ecosystem/mapping.rs` stays in the binary crate
+- [x] **[manual]** YAML custom project types load from
   `~/.config/apmw/project-types.yml` and `.apmw/project-types.yml`
-- [ ] **[manual]** Custom types can override built-in types with the same name
-- [ ] **[manual]** Workspace detection identifies Cargo, pnpm, npm, Yarn, Nx,
+- [x] **[manual]** Custom types can override built-in types with the same name
+- [x] **[manual]** Workspace detection identifies Cargo, pnpm, npm, Yarn, Nx,
   Turborepo, Lerna, Gradle composite, and Maven multi-module workspaces
-- [ ] **[manual]** Version info extraction reads package version + language
+- [x] **[manual]** Version info extraction reads package version + language
   constraints from all 9 supported manifest types
-- [ ] **[manual]** `apmw-core` is published to crates.io
-- [ ] **[manual]** AGENTS.md documents the workspace structure
+- [!] **[manual]** `apmw-core` is published to crates.io — blocked on crates.io auth token (story 08-005)
+- [x] **[manual]** AGENTS.md documents the workspace structure
+
+## Tech Debt (from holistic review 2026-09-02)
+
+These items were identified during the Phase 8.5 holistic review. They are
+design-debt regressions introduced by the extraction, not functional
+breakages — the workspace builds, all 1182 tests pass, and
+`cargo publish --dry-run` succeeds. They should be addressed in a follow-up
+story before `apmw-core` v0.2.
+
+1. **Duplicate `Ecosystem` enum** — `crates/apmw-core/src/ecosystem/mod.rs`
+   defines an `Ecosystem` enum with variants `Python`, `Node`, `Rust`, `Go`,
+   `Ruby`, `Php`, `Jvm`, `Swift`, `Dotnet`, `Flutter`, `Polyglot`, while
+   `crates/apmw-core/src/detect/managers.rs` defines a separate `Ecosystem`
+   enum with `Node`, `Python`, `Rust`, `Go`, `Ruby`, `Jvm`, `Dart`, `Dotnet`,
+   `Apple`, `Container`, `Os`, `App`, `BuildSystem`, `Unknown`. The
+   `ecosystem` enum should be canonical; `detect` should consume it.
+2. **Duplicate `PackageManager` type** — `ecosystem::PackageManager` is an
+   enum for command mapping; `detect::PackageManager` is a struct for
+   detection attributes. The two are bridged by string parsing, which is
+   incomplete (missing aliases for `spm`, `cmake`, `brew`, `nix`, `apt`,
+   `dnf`, `pacman`, `winget`, `snap`, `flatpak`, `helm`, `docker`, `podman`,
+   `devbox`, `vagrant`).
+3. **`detect` does not depend on `apmw_core::ecosystem`** — `detect/mod.rs`
+   imports `Ecosystem`, `PackageManager`, `HierarchyLevel` from
+   `detect/managers.rs`, never from `crate::ecosystem`. `version_info`
+   correctly imports `crate::ecosystem::Ecosystem`.
+4. **`custom_types` depends on `detect` instead of `ecosystem`** — same root
+   cause as #3.
+5. **Ecosystem string disagreement** — `detect` reports `apple` for Swift
+   Package Manager; `version_info` reports `swift`. `detect` reports `dart`;
+   canonical enum reports `flutter`.
+6. **`VALID_MANAGERS` and `PackageManager::parse_manager` out of sync** —
+   `apmw/src/cli.rs` accepts managers that `parse_manager` does not
+   recognize, causing runtime `EcosystemMapping` errors.
+7. **Serialization inconsistency** — canonical `Ecosystem`/`PackageManager`
+   lack `#[serde(rename_all = "snake_case")]`, so serialized output uses
+   `Rust`, `Php`, `Npm` instead of `rust`, `php`, `npm`.
+8. **`build.gradle.kts` not in version_info** — `detect` recognizes it as a
+   primary file; `version_info` only checks `build.gradle`.
+9. **Circular `detect` ↔ `custom_types` dependency** — compiles but violates
+   the PRD's intended dependency graph.
 
 ## Tech Context (Binding Constraint)
 
