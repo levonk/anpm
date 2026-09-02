@@ -7,6 +7,9 @@ description = "Reusable package manager detection, ecosystem mapping, and versio
 license = "MIT"
 repository = "https://github.com/levonk/apmw"
 rust-version = "1.70"
+readme = "README.md"
+keywords = ["package-manager", "detection", "ecosystem", "version", "rust"]
+categories = ["development-tools", "config"]
 
 [dependencies]
 serde = { workspace = true }
