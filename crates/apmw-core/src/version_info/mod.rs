@@ -133,7 +133,10 @@ fn extract_cargo_toml(path: &Path) -> Result<VersionInfo> {
 
   let mut info = VersionInfo::new(path.to_path_buf(), Ecosystem::Rust);
   if let Some(pkg) = value.get("package").and_then(|v| v.as_table()) {
-    info.package_version = pkg.get("version").and_then(|v| v.as_str()).map(String::from);
+    info.package_version = pkg
+      .get("version")
+      .and_then(|v| v.as_str())
+      .map(String::from);
     info.language_version = pkg
       .get("rust-version")
       .and_then(|v| v.as_str())
@@ -621,7 +624,11 @@ version = "0.1.0"
   #[test]
   fn test_package_json_missing_engines() {
     let dir = TempDir::new().unwrap();
-    write_file(dir.path(), "package.json", r#"{"name": "foo", "version": "1.0.0"}"#);
+    write_file(
+      dir.path(),
+      "package.json",
+      r#"{"name": "foo", "version": "1.0.0"}"#,
+    );
     let infos = extract_version_info(dir.path()).expect("extraction failed");
     assert_eq!(infos[0].package_version.as_deref(), Some("1.0.0"));
     assert!(infos[0].language_version.is_none());

@@ -77,17 +77,11 @@ pub struct CustomProjectType {
 /// The top-level YAML config structure for custom project types.
 ///
 /// Contains a list of [`CustomProjectType`] definitions under the `types` key.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct CustomTypesConfig {
   /// The list of custom project type definitions.
   #[serde(default)]
   pub types: Vec<CustomProjectType>,
-}
-
-impl Default for CustomTypesConfig {
-  fn default() -> Self {
-    CustomTypesConfig { types: Vec::new() }
-  }
 }
 
 /// Returns the user-wide config path: `~/.config/apmw/project-types.yml`.
@@ -232,7 +226,7 @@ pub fn merge_with_builtins(
   }
 
   // Sort by priority descending (highest first), matching built-in ordering.
-  result.sort_by(|a, b| b.priority.cmp(&a.priority));
+  result.sort_by_key(|m| std::cmp::Reverse(m.priority));
 
   result
 }
