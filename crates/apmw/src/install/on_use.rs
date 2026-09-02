@@ -410,9 +410,11 @@ impl<R: RunnerResolver, C: RegistryClient> OnUseEngine<R, C> {
     project_dir: &Path,
     config: &OnUseConfig,
   ) -> Result<VersionResolution> {
-    self
-      .version_resolver
-      .resolve(manager, package, &config.version_spec, project_dir)
+    Ok(
+      self
+        .version_resolver
+        .resolve(manager, package, &config.version_spec, project_dir)?,
+    )
   }
 
   /// Step 5: Run the two-phase security scan.

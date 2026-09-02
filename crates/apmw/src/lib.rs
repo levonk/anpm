@@ -11,7 +11,6 @@ pub mod clone;
 pub mod config;
 pub mod containers;
 pub mod daemon;
-pub mod detect;
 pub mod ecosystem;
 pub mod error;
 pub mod governance;
@@ -20,7 +19,10 @@ pub mod output;
 pub mod path_scan;
 pub mod security;
 pub mod telemetry;
-pub mod version;
+
+// Re-export core modules from apmw-core.
+pub use apmw_core::detect;
+pub use apmw_core::version;
 
 pub use agent::{
   default_shim_dir, generate_soft_convention_instructions, home_dir, home_view_content,
@@ -33,6 +35,11 @@ pub use agent::{
   SkillGenerator, StdioTransport, Tool, ToolCallResult, ToolDefinition, ToolListResult,
   ToolRegistry, Transport, APMW_MARKER, DEFAULT_MAX_CONCURRENT_TOOLS, PROTOCOL_VERSION,
   SERVER_NAME, SHIM_MARKER, SHIM_TARGETS, SKILL_FILENAME,
+};
+pub use apmw_core::detect::{DetectionEngine, DetectionResult};
+pub use apmw_core::version::{
+  MinAgeDaysConfig, RegistryClient, RegistryVersion, ResolutionStrategy, VersionResolution,
+  VersionResolver,
 };
 pub use audit::{AuditLogEntry, AuditLogWriter, TerminalType};
 pub use cli::{Cli, Commands};
@@ -49,7 +56,6 @@ pub use containers::{
   GovernanceRule as ContainerGovernanceRule, LocalImage, PullResult, TokioExecutor,
 };
 pub use daemon::{DaemonManager, DaemonStatus, JobId, JobManager, JobStatus};
-pub use detect::{DetectionEngine, DetectionResult};
 pub use ecosystem::{ApmwCommand, EcosystemMap, EcosystemMapper};
 pub use error::{ApmwError, Result};
 pub use governance::{
@@ -71,10 +77,6 @@ pub use security::{
 pub use telemetry::{
   ErrorCategory, HttpSender, MockSender, NoopSender, Outcome, TelemetryCollector, TelemetryCommand,
   TelemetryEvent, TelemetryEventBuilder, TelemetrySender, TelemetryTerminalType, Timer,
-};
-pub use version::{
-  MinAgeDaysConfig, RegistryClient, RegistryVersion, ResolutionStrategy, VersionResolution,
-  VersionResolver,
 };
 
 /// Returns the version of the apmw library.

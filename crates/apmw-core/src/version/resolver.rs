@@ -18,7 +18,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::{debug, error, info};
 
-use crate::error::{ApmwError, Result};
+use crate::error::{CoreError, Result};
 
 use super::{MinAgeDaysConfig, ResolutionStrategy, Version, VersionConstraint, VersionResolution};
 
@@ -482,7 +482,7 @@ impl<C: RegistryClient> VersionResolver<C> {
       ));
     }
 
-    Err(ApmwError::VersionResolution(format!(
+    Err(CoreError::VersionResolution(format!(
       "no version found for {package} (manager {manager}, requested {requested:?})"
     )))
   }
@@ -500,7 +500,7 @@ impl<C: RegistryClient> VersionResolver<C> {
       if !path.is_file() {
         continue;
       }
-      let content = std::fs::read_to_string(&path).map_err(ApmwError::from)?;
+      let content = std::fs::read_to_string(&path).map_err(CoreError::from)?;
       if let Some(pinned) = parse_lockfile_version(*kind, &content, package) {
         debug!("lockfile {} pinned {package} to {pinned}", kind);
         return Ok(Some(pinned));
@@ -1137,7 +1137,7 @@ mod tests {
     assert!(result.is_err());
     assert!(matches!(
       result.unwrap_err(),
-      ApmwError::VersionResolution(_)
+      CoreError::VersionResolution(_)
     ));
   }
 

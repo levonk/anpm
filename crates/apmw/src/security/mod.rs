@@ -788,7 +788,7 @@ mod tests {
     orch.register_scanner(Box::new(mock));
     let dir = std::env::temp_dir();
     let req = PackageScanRequest::new("pkg", dir);
-    let _ = orch.scan_all(&[req.clone()]).unwrap();
+    let _ = orch.scan_all(std::slice::from_ref(&req)).unwrap();
     // We can't inspect the mock after it was moved into the orchestrator,
     // but the scan must succeed and the report must be safe.
     let report = orch.scan_all(&[req]).unwrap();

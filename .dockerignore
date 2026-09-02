@@ -43,3 +43,7 @@ clippy.toml
 .rust-analyzer.toml
 benches/
 tests/
+examples/
+crates/*/benches/
+crates/*/tests/
+crates/*/examples/

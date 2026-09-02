@@ -31,7 +31,7 @@ use std::path::Path;
 use serde::{Deserialize, Serialize};
 use tracing::{debug, info, warn};
 
-use crate::error::{ApmwError, Result};
+use crate::error::{CoreError, Result};
 
 /// Weight assigned to a primary file match in confidence scoring.
 const WEIGHT_PRIMARY: f64 = 1.0;
@@ -155,7 +155,7 @@ impl DetectionEngine {
     let start = std::time::Instant::now();
 
     if !dir.exists() {
-      return Err(ApmwError::PackageManagerNotFound(format!(
+      return Err(CoreError::PackageManagerNotFound(format!(
         "directory does not exist: {}",
         dir.display()
       )));
@@ -165,7 +165,7 @@ impl DetectionEngine {
       Ok(e) => e,
       Err(err) => {
         warn!(error = %err, dir = %dir.display(), "Failed to read directory for detection");
-        return Err(ApmwError::Io(err));
+        return Err(CoreError::Io(err));
       }
     };
 
@@ -307,7 +307,7 @@ impl Default for DetectionEngine {
 pub fn detect_current_dir() -> Result<Vec<DetectionResult>> {
   let engine = DetectionEngine::new();
   let dir = std::env::current_dir()
-    .map_err(|e| ApmwError::PackageManagerNotFound(format!("cannot get current dir: {e}")))?;
+    .map_err(|e| CoreError::PackageManagerNotFound(format!("cannot get current dir: {e}")))?;
   engine.detect(&dir)
 }
 
