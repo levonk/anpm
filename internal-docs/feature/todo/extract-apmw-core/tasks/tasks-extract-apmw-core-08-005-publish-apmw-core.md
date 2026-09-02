@@ -7,7 +7,7 @@ prd_file: "internal-docs/feature/todo/extract-apmw-core/feat-202609021309-extrac
 phase: 8
 parallel_id: 5
 branch: "feature/current/extract-apmw-core/story-08-005-publish-apmw-core"
-status: "todo"
+status: "blocked"
 assignee: ""
 reviewer: ""
 dependencies: ["08-001", "08-002", "08-003", "08-004"]
@@ -19,7 +19,20 @@ tags: ["publish", "crates-io", "release"]
 due: ""
 create-date: "2026-09-02"
 update-date: "2026-09-02"
+blocked_reason: "No crates.io API token available — cargo login required"
 ---
+
+## Blocker
+
+**Status**: [!] Blocked
+**Reason**: No crates.io API token available
+**Details**: All prep work is complete — `cargo publish --dry-run -p apmw-core` passes cleanly (16 files, 247.4KiB), publish metadata added (readme, keywords, categories), README.md created, no path dependencies. However, `~/.cargo/credentials` does not exist and no auth token is available to run `cargo login`.
+**Question for user**: crates.io authentication is required to publish `apmw-core`. Do you have a crates.io API token?
+**Options**:
+1. Provide the token now — run `cargo login <TOKEN>` then `cargo publish -p apmw-core`
+2. Skip publishing for now — publish manually later
+3. Publish under a different name — if `apmw-core` is taken (it's not — name is available)
+**Recommendation**: Option 1 (provide token) — all prep work is complete, dry-run passes, publishing completes the feature's Definition of Done.
 
 ## Summary
 
