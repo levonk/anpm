@@ -1,9 +1,9 @@
 ---
 date:
   created: "2026-09-02"
-  completed: ""
+  completed: "2026-09-02"
   last-activity: "2026-09-02"
-status: Blocked
+status: Complete
 slug: extract-apmw-core
 ---
 
