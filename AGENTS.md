@@ -46,11 +46,11 @@ follows ADR-20260607001 (daemon mode, AXI agent mode, TOON output).
 
 ```bash
 # Developer interface (auto-detects devbox)
-just build       # Build the project (release mode)
-just test        # Run all tests
-just lint        # Run clippy with -D warnings
+just build       # Build the project (release mode, both crates)
+just test        # Run all tests (cargo test --workspace)
+just lint        # Run clippy with -D warnings (all targets, all features)
 just format      # Format code with rustfmt
-just check       # Run cargo check
+just check       # Run cargo check (workspace)
 just audit       # Run cargo audit for vulnerabilities
 just outdated    # Check for outdated dependencies
 just validate    # Run all quality gates (fmt + clippy + test + doc + audit + outdated)
@@ -77,7 +77,8 @@ just clean_impl       # cargo clean
 
 ```
 .
-├── Cargo.toml              # Rust manifest with dependencies
+├── Cargo.toml              # Workspace root (virtual manifest, no [package])
+├── Cargo.lock              # Unified lockfile for both crates
 ├── justfile                # Task runner (ADR 20260131001 compliant)
 ├── devbox.json             # Nix dev environment (Rust toolchain)
 ├── .envrc                  # direnv integration
@@ -86,16 +87,83 @@ just clean_impl       # cargo clean
 ├── .rust-analyzer.toml     # IDE configuration
 ├── Dockerfile              # Multi-stage build (rust:1.75-slim → debian:bookworm-slim)
 ├── .github/workflows/ci.yml  # CI pipeline (fmt, clippy, test, build, audit)
-├── src/
-│   ├── main.rs             # Binary entry point (CLI with clap)
-│   ├── lib.rs              # Library root
-│   └── error.rs            # Error types (thiserror)
-├── tests/
-│   └── integration_tests.rs  # Black-box integration tests
-├── benches/
-│   └── performance.rs      # Criterion benchmarks
+├── crates/
+│   ├── apmw-core/          # Reusable library crate (published to crates.io)
+│   │   ├── Cargo.toml      # Library manifest (detect, ecosystem, version, etc.)
+│   │   ├── README.md       # Crate README
+│   │   └── src/
+│   │       ├── lib.rs      # Library root — exports all public modules
+│   │       ├── error.rs    # CoreError type (thiserror)
+│   │       ├── detect/     # Package manager detection engine
+│   │       │   ├── mod.rs  # Detection engine, confidence scoring
+│   │       │   ├── managers.rs  # 35 PackageManager definitions
+│   │       │   └── attributes.rs # Evidence collection
+│   │       ├── ecosystem/  # Ecosystem definitions, canonical managers
+│   │       │   └── mod.rs  # Ecosystem enum, mapping (NO mapping.rs — CLI-specific)
+│   │       ├── version/    # Version resolution + lockfile parsing
+│   │       │   ├── mod.rs  # Resolution strategy, supply-chain defense
+│   │       │   └── resolver.rs # Lockfile parsing, registry client, engine constraints
+│   │       ├── custom_types/    # YAML custom project types (extensibility)
+│   │       │   └── mod.rs  # CustomProjectType, load/merge with built-ins
+│   │       ├── workspace/  # Workspace/monorepo detection
+│   │       │   └── mod.rs  # 9 organizers: Cargo, pnpm, npm, Yarn, Nx, Turbo, Lerna, Gradle, Maven
+│   │       └── version_info/    # Version info extraction from manifests
+│   │           └── mod.rs  # 9 manifest types: Cargo.toml, package.json, pyproject.toml, etc.
+│   └── apmw/               # Binary crate (CLI, agent, install, security, etc.)
+│       ├── Cargo.toml      # Binary manifest (depends on apmw-core via path + version)
+│       ├── src/
+│       │   ├── main.rs     # Binary entry point (CLI with clap)
+│       │   ├── lib.rs      # Library root (re-exports from apmw-core)
+│       │   ├── error.rs    # ApmwError (wraps CoreError via #[from])
+│       │   ├── cli.rs      # CLI argument parsing
+│       │   ├── ecosystem/
+│       │   │   ├── mod.rs  # Re-exports from apmw_core::ecosystem
+│       │   │   └── mapping.rs  # CLI-specific command translations (pip→uv, npm→pnpm)
+│       │   ├── agent/      # AI agent integration (MCP, hooks, skills, docs notify)
+│       │   ├── audit/      # Audit log writer
+│       │   ├── clone/      # Historyless clone + AST indexing
+│       │   ├── config/     # User config + migration
+│       │   ├── containers/ # Container package support (docker/podman)
+│       │   ├── daemon/     # Daemon mode (tokio, local socket, job manager)
+│       │   ├── governance/ # Governance engine (prefer/force/block/eject)
+│       │   ├── install/    # Add engine (runtime + --dev deps, install-on-use)
+│       │   ├── output/     # AXI output (TOON encoder, human format)
+│       │   ├── path_scan/  # PATH scanner
+│       │   ├── security/   # Security scanning orchestrator + plugins
+│       │   └── telemetry/  # Anonymized telemetry collector
+│       ├── tests/          # Integration tests + sandbox
+│       ├── benches/        # Criterion benchmarks
+│       └── examples/       # Examples (gen-assets)
 └── .windsurf/rules/        # PRD/task generation rules (keep)
 ```
+
+### Crate Split
+
+The repo uses a **Cargo workspace** with two members:
+
+| Crate | Type | Published | Purpose |
+|-------|------|-----------|---------|
+| `apmw-core` | Library | Yes (crates.io) | Reusable detection, ecosystem, version, workspace, version_info, custom_types modules |
+| `apmw` | Binary | No | CLI tool, agent integration, install engine, security scanning |
+
+The binary depends on the library via `path + version`:
+```toml
+# crates/apmw/Cargo.toml
+[dependencies]
+apmw-core = { path = "../apmw-core", version = "0.1.0" }
+```
+
+This allows local development with path dependencies while enabling downstream
+repos (project-lint, project-detection skill, levonk-base-boilerplate) to depend
+on `apmw-core` via version-pinned crates.io dependency.
+
+**What stays in the binary**: `ecosystem/mapping.rs` (CLI-specific command
+translations like `pip` → `uv`, `npm` → `pnpm`), agent integration, install
+engine, security scanning, daemon mode, governance, telemetry, containers,
+clone, config, output, path_scan, audit.
+
+**What goes in the library**: `detect`, `ecosystem` (without mapping.rs),
+`version`, `error` (CoreError), `custom_types`, `workspace`, `version_info`.
 
 ## Architecture
 
@@ -129,6 +197,8 @@ Default agent mode per ADR-20260607001 §36-45:
 |------------|---------|
 | tokio | Async runtime (full features) |
 | serde + serde_json | Serialization |
+| serde_yaml | YAML deserialization (custom_types config) |
+| toml | TOML parsing (Cargo.toml, pyproject.toml detection) |
 | thiserror | Structured error types |
 | anyhow | Error context |
 | clap | CLI argument parsing |
@@ -136,6 +206,7 @@ Default agent mode per ADR-20260607001 §36-45:
 | zeroize | Secure memory clearing |
 | tracing | Structured logging |
 | indicatif | Progress indicators |
+| glob | Glob pattern expansion (workspace member paths) |
 
 ### Testing Dependencies
 
