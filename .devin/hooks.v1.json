@@ -1,0 +1,38 @@
+{
+  "PreToolUse": [
+    {
+      "matcher": "run_subagent",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash .devin/scripts/check-subagent-gate.sh",
+          "timeout": 5
+        }
+      ]
+    }
+  ],
+  "UserPromptSubmit": [
+    {
+      "matcher": "",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash .devin/scripts/inject-binding-contract.sh",
+          "timeout": 5
+        }
+      ]
+    }
+  ],
+  "Stop": [
+    {
+      "matcher": "",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash .devin/scripts/check-uncommitted-stop.sh",
+          "timeout": 5
+        }
+      ]
+    }
+  ]
+}
