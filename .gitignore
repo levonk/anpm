@@ -37,3 +37,8 @@ packaging/*/dist/
 
 # Proptest regression artifacts
 /proptest-regressions/
+
+# Skill installation artifacts (levonk/skills-releases)
+/.agents/skills/
+/agent/
+/skills-lock.json
