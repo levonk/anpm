@@ -152,7 +152,7 @@ error ──┐
   Turborepo, Lerna, Gradle composite, and Maven multi-module workspaces
 - [x] **[manual]** Version info extraction reads package version + language
   constraints from all 9 supported manifest types
-- [!] **[manual]** `apmw-core` is published to crates.io — blocked on crates.io auth token (story 08-005)
+- [x] **[manual]** `apmw-core` is published to crates.io (v0.1.0)
 - [x] **[manual]** AGENTS.md documents the workspace structure
 
 ## Tech Debt (from holistic review 2026-09-02)
