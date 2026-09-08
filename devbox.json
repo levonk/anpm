@@ -1,25 +1,35 @@
 {
-  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.17.3/.schema/devbox.schema.json",
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.18.0/.schema/devbox.schema.json",
   "nixpkgs": {
     "commit": "11cb3517b3af6af300dd6c055aeda73c9bf52c48"
   },
   "packages": {
-    "difftastic": "",
-    "just": "",
-    "git": "",
-    "eza": "",
-    "fzf": "",
-    "devbox": "",
-    "github:nixos/nixpkgs/25.05#rustc": "",
-    "github:nixos/nixpkgs/25.05#cargo": "",
-    "github:nixos/nixpkgs/25.05#clippy": "",
-    "github:nixos/nixpkgs/25.05#rustfmt": "",
-    "github:nixos/nixpkgs/25.05#cargo-audit": "",
-    "github:nixos/nixpkgs/25.05#cargo-outdated": "",
-    "github:nixos/nixpkgs/25.05#just": "",
-    "git-secrets": "",
-    "github:levonk/nono#nono": "",
-    "github:kunchenguid/treehouse": ""
+    "difftastic@latest":                              { "excluded_platforms": ["x86_64-darwin"] },
+    "github:nixos/nixpkgs/25.05#difftastic":          { "platforms": ["x86_64-darwin"] },
+    "just@latest":                                    { "excluded_platforms": ["x86_64-darwin"] },
+    "github:nixos/nixpkgs/25.05#just":                { "platforms": ["x86_64-darwin"] },
+    "git@latest":                                     { "excluded_platforms": ["x86_64-darwin"] },
+    "github:nixos/nixpkgs/25.05#git":                 { "platforms": ["x86_64-darwin"] },
+    "eza@latest":                                     { "excluded_platforms": ["x86_64-darwin"] },
+    "github:nixos/nixpkgs/25.05#eza":                 { "platforms": ["x86_64-darwin"] },
+    "fzf@latest":                                     { "excluded_platforms": ["x86_64-darwin"] },
+    "github:nixos/nixpkgs/25.05#fzf":                 { "platforms": ["x86_64-darwin"] },
+    "devbox@latest":                                  { "excluded_platforms": ["x86_64-darwin"] },
+    "github:nixos/nixpkgs/25.05#devbox":              { "platforms": ["x86_64-darwin"] },
+    "rustc@latest":                                   { "excluded_platforms": ["x86_64-darwin"] },
+    "github:nixos/nixpkgs/25.05#rustc":               { "platforms": ["x86_64-darwin"] },
+    "cargo@latest":                                   { "excluded_platforms": ["x86_64-darwin"] },
+    "github:nixos/nixpkgs/25.05#cargo":               { "platforms": ["x86_64-darwin"] },
+    "clippy@latest":                                  { "excluded_platforms": ["x86_64-darwin"] },
+    "github:nixos/nixpkgs/25.05#clippy":              { "platforms": ["x86_64-darwin"] },
+    "rustfmt@latest":                                 { "excluded_platforms": ["x86_64-darwin"] },
+    "github:nixos/nixpkgs/25.05#rustfmt":             { "platforms": ["x86_64-darwin"] },
+    "cargo-audit@latest":                             { "excluded_platforms": ["x86_64-darwin"] },
+    "github:nixos/nixpkgs/25.05#cargo-audit":         { "platforms": ["x86_64-darwin"] },
+    "cargo-outdated@latest":                          { "excluded_platforms": ["x86_64-darwin"] },
+    "github:nixos/nixpkgs/25.05#cargo-outdated":      { "platforms": ["x86_64-darwin"] },
+    "github:levonk/nono/feat-nix-package-manager-install#nono": {},
+    "github:kunchenguid/treehouse":                          {}
   },
   "shell": {
     "init_hook": [
@@ -27,12 +37,12 @@
     ],
     "scripts": {
       "bootstrap": "just bootstrap_impl",
-      "build": "just build_impl",
-      "test": "just test_impl",
-      "dev": "just dev_impl",
-      "lint": "just lint_impl",
-      "format": "just format_impl",
-      "clean": "just clean_impl"
+      "build":     "just build_impl",
+      "test":      "just test_impl",
+      "dev":       "just dev_impl",
+      "lint":      "just lint_impl",
+      "format":    "just format_impl",
+      "clean":     "just clean_impl"
     }
   }
 }
